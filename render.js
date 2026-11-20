@@ -165,9 +165,9 @@ class Renderer{
    this.text('· POWER ·',72,456,'#d8d8d8',11,'center');
    this.text('· WEAPONRY ·',280,456,'#d8d8d8',11,'center');
    this.text('SHURIKEN x'+String(p.stars).padStart(2,'0'),280,410,'#d8d8d8',13,'center');
-   this.text('THE',630,384,'#8878d8',12,'center');
-   this.text('LAST',630,404,'#808080',16,'center');
-   this.text('NINJA',630,428,'#8878d8',26,'center');
+   this.text('SHADOWS',630,384,'#8878d8',12,'center');
+   this.text('OF THE',630,404,'#808080',12,'center');
+   this.text('EMBER CLAN',630,428,'#8878d8',18,'center');
    return;
   }
   c.fillStyle='#0a1624';c.fillRect(0,432,768,48);line(c,0,432,768,432,'#7b725c');line(c,0,434,768,434,'#263944');
