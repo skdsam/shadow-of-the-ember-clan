@@ -1,0 +1,52 @@
+{
+  "errors": [],
+  "campaign": [
+    {
+      "level": 1,
+      "guardian": "Harbour Warden",
+      "frames": 139,
+      "hp": 100
+    },
+    {
+      "level": 2,
+      "guardian": "Reed Stalker",
+      "frames": 165,
+      "hp": 100
+    },
+    {
+      "level": 3,
+      "guardian": "Silent Abbot",
+      "frames": 191,
+      "hp": 100
+    },
+    {
+      "level": 4,
+      "guardian": "Furnace Keeper",
+      "frames": 217,
+      "hp": 100
+    },
+    {
+      "level": 5,
+      "guardian": "Akuro, the Ash Regent",
+      "frames": 243,
+      "hp": 100
+    }
+  ],
+  "checks": [
+    "title",
+    "intro",
+    "keyboard movement",
+    "map pause",
+    "pause",
+    "settings",
+    "checkpoint reload",
+    "audio context",
+    "five region renders",
+    "five guardians using sword simulation",
+    "ending",
+    "credits",
+    "disk launch",
+    "touch layout"
+  ],
+  "note": "Campaign automation positions the player at objectives and isolates each guardian. It does not certify a human traversal or difficulty balance."
+}
