@@ -413,8 +413,15 @@ function spawnHitSparks(x, z, color) {
 }
 
 const keys = new Set();
-const unlockAudio = () => score.start().catch(() => {});
+const unlockAudio = () => {
+  score.start().then(() => {
+    const prompt = document.getElementById('audio-hint');
+    if (prompt && score.ctx?.state === 'running') prompt.hidden = true;
+  }).catch(() => {});
+};
 window.addEventListener('pointerdown', unlockAudio);
+window.addEventListener('touchstart', unlockAudio, { passive: true });
+window.addEventListener('click', unlockAudio);
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
@@ -690,6 +697,7 @@ function drawPowerSnakes(ratio) {
 }
 
 score.setMode('title', 5);
+unlockAudio();
 requestAnimationFrame(animate);
 
 window.addEventListener('resize', () => {
