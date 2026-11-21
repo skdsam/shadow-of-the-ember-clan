@@ -32,9 +32,11 @@
   .bar-wounds{height:100%;background:#d86050;width:100%;transition:width .08s}
   .bar-power{height:100%;background:linear-gradient(90deg,#e06048,#f0c050,#88e0a0);width:100%;transition:width .06s}
   .hud-bottom{grid-column:1 / -1;display:grid;grid-template-columns:150px 140px 1fr 240px;align-items:center;padding:8px 18px;gap:12px}
-  .lives-row{display:flex;justify-content:center;gap:10px;height:36px;align-items:center;margin-bottom:8px}
-  .life-pip{width:16px;height:16px;background:#e04848;border:2px solid #ffffff;box-shadow:0 0 0 2px #000000,inset -3px -3px 0 #981818}
-  .life-pip.lost{background:#181818;border-color:#383838;box-shadow:none}
+  .lives-row{display:flex;justify-content:center;gap:14px;height:36px;align-items:center;margin-bottom:8px}
+  .life-pip{position:relative;width:16px;height:14px;background:#d82828;border-radius:4px 4px 6px 6px;box-shadow:inset 3px 3px 0 #ff7878,inset -3px -3px 0 #801010,0 0 0 2px #000}
+  .life-pip::before{content:"";position:absolute;top:-6px;left:6px;width:4px;height:5px;background:#683818;box-shadow:3px -1px 0 #38d058,5px 0 0 #38d058}
+  .life-pip.lost{background:#181818;box-shadow:none}
+  .life-pip.lost::before{display:none}
   #power-canvas{display:block;margin:0 auto 4px;width:112px;height:58px;image-rendering:pixelated;background:#000000}
   .logo-c64{text-align:center;line-height:1.1}
   .logo-c64 .t1{color:#8878d8;font-size:13px;letter-spacing:2px;font-weight:bold}

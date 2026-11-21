@@ -535,7 +535,7 @@ function animate(now) {
     playerMesh.userData.legR.rotation.x = -1.35;
     playerMesh.userData.armR.rotation.x = -1.2;
   } else if (p.state === 'dodge') {
-    playerMesh.visible = true;
+    playerMesh.visible = !(p.invuln > 0 && Math.floor(now / 80) % 2 === 1);
     playerMesh.userData.rollNode.position.y = 0;
     const rollProg = 1 - p.timer / (p.dodgeDur || 0.42);
     playerMesh.userData.rollNode.rotation.set(rollProg * Math.PI * 2, 0, 0);
@@ -543,7 +543,7 @@ function animate(now) {
     playerMesh.userData.legR.rotation.x = -0.95;
     playerMesh.userData.armR.rotation.x = -1.1;
   } else {
-    playerMesh.visible = true;
+    playerMesh.visible = !(p.invuln > 0 && Math.floor(now / 80) % 2 === 1);
     playerMesh.userData.rollNode.position.y = 0;
     playerMesh.userData.rollNode.rotation.set(0, 0, 0);
     const walkSwing = p.state === 'walk' ? Math.sin(p.step * 1.4) * 0.6 : 0;
