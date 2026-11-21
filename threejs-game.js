@@ -993,9 +993,11 @@ function drawC64PixelHUD(p, eRatio, nearObj, now) {
       drawPixelText(ic, 'FIND IRON KEY AND DRAGON NAILS', 135, 19, '#ffffff', 1);
       drawPixelText(ic, 'RECOVER 3 RELICS . DEFEAT THE SHOGUN', 135, 31, '#f0d060', 1);
     }
-    const bc = btnCv.getContext('2d'); bc.imageSmoothingEnabled = false;
-    bc.fillStyle = '#000000'; bc.fillRect(0, 0, 140, 15);
-    drawPixelText(bc, gamePhase === 'title' ? '. BEGIN JOURNEY .' : '. ENTER WASTELANDS .', 70, 5, '#f0d060', 1);
+    if (btnCv) {
+      const bc = btnCv.getContext('2d'); bc.imageSmoothingEnabled = false;
+      bc.fillStyle = '#000000'; bc.fillRect(0, 0, 140, 15);
+      drawPixelText(bc, gamePhase === 'title' ? '. BEGIN JOURNEY .' : '. ENTER WASTELANDS .', 70, 5, '#f0d060', 1);
+    }
   }
   if (msgCv) {
     const mc = msgCv.getContext('2d'); mc.imageSmoothingEnabled = false;
