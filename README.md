@@ -1,6 +1,6 @@
 # Shadow of the Ember Clan
 
-A modern 3D isometric rebuild of **The Last Ninja** with a twist — blending classic C64-inspired pixel aesthetics, multi-region maze exploration, and chiptune synthesis with Three.js 3D isometric action, kneeling shrine prayer healing, weapon switching, and dynamic boss encounters. Open **index.html** (or **threejs.html**) in a modern browser, or double-click **Play.cmd** on Windows. No install, account, download or build step is required. Use fullscreen for the strongest presentation.
+Created by **SkdSam** — a modern 3D isometric rebuild of **The Last Ninja** with a twist. ***The Last Ninja*** is a childhood game I played and loved, and it inspired me to create this tribute blending classic C64-inspired pixel aesthetics, multi-region maze exploration, and chiptune synthesis with Three.js 3D isometric action, kneeling shrine prayer healing, weapon switching, and dynamic boss encounters. Open **index.html** (or **threejs.html**) in a modern browser, or double-click **Play.cmd** on Windows. No install, account, download or build step is required. Use fullscreen for the strongest presentation.
 
 ## Demo
 
@@ -30,6 +30,13 @@ Rest at a lantern shrine to heal, refill shuriken and save. Death and Continue r
 
 For browser QA, serve the folder with `python -m http.server 8765`, then open `http://localhost:8765`. The game also runs directly from disk.
 
-## Credits
+## Credits & Inspiration
 
-Creative direction and concept approval: the user. Implementation, procedural sprites/scenery and original synthesized score: Codex with OpenAI. Loading and cinematic illustrations: OpenAI image generation. Inspired by The Last Ninja from System 3 and its celebrated musical atmosphere. This independent game contains no copied Last Ninja sprites, recordings, melodies or branding. No external libraries are required at runtime.
+- **Creator & Creative Direction**: **SkdSam** — *The Last Ninja* was a childhood game I played and loved growing up, and those fond memories directly inspired me to build *Shadow of the Ember Clan*.
+- **Original *The Last Ninja* (1987) Creators & Rights Holders**: Full respect and credit to **System 3** and the legendary team behind the original Commodore 64 classic:
+  - **Mark Cale** — System 3 founder, creator, designer & producer
+  - **John Twiddy** — Original C64 programming & engine
+  - **Hugh Riley** — Original artwork & isometric graphics
+  - **Ben Daglish** & **Anthony Lees** — Original iconic C64 SID soundtrack
+
+This independent tribute contains no copied *Last Ninja* sprites, recordings, or proprietary branding.
