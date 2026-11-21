@@ -245,7 +245,9 @@ class Game{
    const nx=p.x+p.dodgeX*dt*6.2,ny=p.y+p.dodgeY*dt*6.2;
    const row=this.map.tiles[Math.floor(ny)],t=row&&row[Math.floor(nx)];
    const overWater=this.map.pathOnly&&t===1&&p.jumpZ>.25;
-   if(walkable(this.map,nx,ny)||(!this.map.pathOnly&&nx>1&&nx<SIZE-1&&ny>1&&ny<SIZE-1&&p.jumpZ>.28)||overWater){p.x=nx;p.y=ny;}
+   const hitEnemy=this.enemies.find(e=>e.hp>0&&Math.hypot(nx-e.x,ny-e.y)<.78);
+   if(hitEnemy){p.timer=0;p.jumpZ=0;p.state='idle';this.hurtPlayer(10,hitEnemy);}
+   else if(walkable(this.map,nx,ny)||(!this.map.pathOnly&&nx>1&&nx<SIZE-1&&ny>1&&ny<SIZE-1&&p.jumpZ>.28)||overWater){p.x=nx;p.y=ny;}
    else this.move(p,p.dodgeX*dt*6.2,p.dodgeY*dt*6.2);
    if(!p.timer){p.state='idle';p.jumpZ=0;if(!walkable(this.map,p.x,p.y)){for(const [ox,oy] of [[.5,0],[-.5,0],[0,.5],[0,-.5],[1,0],[-1,0],[0,1],[0,-1]])if(walkable(this.map,p.x+ox,p.y+oy)){p.x+=ox;p.y+=oy;break;}}}
   }
