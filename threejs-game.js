@@ -628,6 +628,7 @@ function animate(now) {
     objGroup.add(mesh);
   }
   for (const q of game.projectiles) {
+    if (Math.floor(q.x / 9) !== rx || Math.floor(q.y / 9) !== ry) continue;
     const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.14), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
     star.position.set(q.x, 0.7, q.y);
     objGroup.add(star);

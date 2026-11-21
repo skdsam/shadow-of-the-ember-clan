@@ -199,11 +199,13 @@ class Game{
    e.hitFlash=Math.max(0,e.hitFlash-dt);if(e.hp<=0){e.timer=Math.max(0,e.timer-dt);continue;}e.timer=Math.max(0,e.timer-dt);e.cooldown=Math.max(0,e.cooldown-dt);e.pathTimer-=dt;
    const shrine=this.map.objects.find(o=>o.type==='shrine');
    const inSanctuary=shrine&&dist(shrine,p)<3.5;
+   const sameRoom=!this.map.pathOnly||(Math.floor(e.x/9)===Math.floor(p.x/9)&&Math.floor(e.y/9)===Math.floor(p.y/9));
    const d=dist(e,p);
    if(shrine&&dist(e,shrine)<3.5){const a=Math.atan2(e.y-shrine.y,e.x-shrine.x);e.x=shrine.x+Math.cos(a)*3.55;e.y=shrine.y+Math.sin(a)*3.55;e.alert=false;}
-   if(inSanctuary){e.alert=false;}else if((d<7.5&&this.lineClear(e,p))||(this.map.pathOnly&&Math.floor(e.x/9)===Math.floor(p.x/9)&&Math.floor(e.y/9)===Math.floor(p.y/9)))e.alert=true;if(d>13)e.alert=false;
+   if(!sameRoom||inSanctuary){e.alert=false;e.state='idle';continue;}
+   else if((d<7.5&&this.lineClear(e,p))||this.map.pathOnly)e.alert=true;if(d>13)e.alert=false;
    if(e.state==='windup'){
-    if(e.timer===0){e.state='attack';e.timer=.22;if(e.kind==='archer'){let a=Math.atan2(p.y-e.y,p.x-e.x);this.projectiles.push({x:e.x,y:e.y,dx:Math.cos(a)*6,dy:Math.sin(a)*6,life:1.8,owner:'enemy',kind:'arrow',damage:12});this.emit('effect',{name:'arrow'});}else if(d<(e.kind==='boss'?2.1:e.kind==='spear'?1.9:1.45)&&this.lineClear(e,p))this.hurtPlayer(e.kind==='boss'?22:e.kind==='armour'?19:13,e);e.cooldown=e.kind==='boss'?.45:.65;}continue;
+    if(e.timer===0){e.state='attack';e.timer=.22;if(e.kind==='archer'){let a=Math.atan2(p.y-e.y,p.x-e.x);this.projectiles.push({x:e.x,y:e.y,rx:Math.floor(e.x/9),ry:Math.floor(e.y/9),dx:Math.cos(a)*6,dy:Math.sin(a)*6,life:1.8,owner:'enemy',kind:'arrow',damage:12});this.emit('effect',{name:'arrow'});}else if(d<(e.kind==='boss'?2.1:e.kind==='spear'?1.9:1.45)&&this.lineClear(e,p))this.hurtPlayer(e.kind==='boss'?22:e.kind==='armour'?19:13,e);e.cooldown=e.kind==='boss'?.45:.65;}continue;
    }
    if(e.state==='attack'){if(!e.timer)e.state='idle';continue;}
    if(e.alert){e.angle=Math.atan2(p.y-e.y,p.x-e.x);const range=e.kind==='archer'?5.5:e.kind==='boss'?1.7:e.kind==='spear'?1.55:1.15;
@@ -212,7 +214,8 @@ class Game{
    }else{e.state='idle';e.patrol+=dt;if(e.patrol>3.8){e.patrol=0;e.angle+=Math.PI/2;}}
   }
   for(const q of this.projectiles){q.life-=dt;const steps=3;for(let i=0;i<steps;i++){
-   q.x+=q.dx*dt/steps;q.y+=q.dy*dt/steps;if(!walkable(this.map,q.x,q.y,.05)){q.life=0;break;}
+   q.x+=q.dx*dt/steps;q.y+=q.dy*dt/steps;
+   if(!walkable(this.map,q.x,q.y,.05)||(this.map.pathOnly&&(Math.floor(q.x/9)!==q.rx||Math.floor(q.y/9)!==q.ry||Math.floor(q.x/9)!==Math.floor(p.x/9)||Math.floor(q.y/9)!==Math.floor(p.y/9)))){q.life=0;break;}
    if(q.owner==='player'){const e=this.enemies.find(e=>e.hp>0&&dist(e,q)<.45);if(e){this.hurtEnemy(e,q.damage);q.life=0;break;}}
    else if(dist(p,q)<.4){this.hurtPlayer(q.damage,q);q.life=0;break;}
   }}this.projectiles=this.projectiles.filter(q=>q.life>0);
