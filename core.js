@@ -29,7 +29,7 @@ function createMap(index){
   const trees=[[1,24,0],[8,21,1],[1,15,0],[7,9,1],[10,19,0],[16,24,1],[9,16,0],[16,9,1],[10,7,0],[16,1,1],[19,24,0],[24,15,1],[19,9,0],[24,7,1]];
   trees.forEach(([x,y,v])=>{props.push({x:x+.5,y:y+.5,type:'c64tree',variant:v,w:1,h:1});});
   const objects=[{id:'shrine',type:'shrine',x:2.5,y:21.2},{id:'guide',type:'guide',x:6.5,y:21.2},
-  {id:'relic0',type:'relic',x:3.2,y:4.5},{id:'relic1',type:'relic',x:20.2,y:22.5},{id:'relic2',type:'relic',x:20.2,y:12.5},
+  {id:'relic0',type:'relic',x:3.2,y:4.5},{id:'relic1',type:'relic',x:20.2,y:21.2},{id:'relic2',type:'relic',x:20.2,y:11.2},
   {id:'node0',type:'node',number:0,x:3.2,y:13.5},{id:'node1',type:'node',number:1,x:11.2,y:11.2},{id:'node2',type:'node',number:2,x:20.2,y:14.5},
   {id:'food0',type:'food',x:6.1,y:19.5},{id:'food1',type:'food',x:14.1,y:16.5},{id:'food2',type:'food',x:23.1,y:8.5},
   {id:'stars0',type:'stars',x:3.2,y:18.5},{id:'stars1',type:'stars',x:12.5,y:21.2},{id:'stars2',type:'stars',x:13.5,y:3.2},
