@@ -619,9 +619,6 @@ function animate(now) {
     objGroup.add(star);
   }
 
-  // Retracting Dual-Snake Spiral Power Meter (Last Ninja Style)
-  drawPowerSnakes(Math.max(0, Math.min(1, p.hp / 100)));
-
   const nearShrine = game.map.objects.find(o => o.type === 'shrine' && dist(o, p) < 2.2);
   if (nearShrine) {
     if (game.shrineCooldown > 0) {
