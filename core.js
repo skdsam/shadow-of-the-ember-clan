@@ -251,7 +251,7 @@ class Game{
    else this.move(p,p.dodgeX*dt*6.2,p.dodgeY*dt*6.2);
    if(!p.timer){p.state='idle';p.jumpZ=0;if(!walkable(this.map,p.x,p.y)){for(const [ox,oy] of [[.5,0],[-.5,0],[0,.5],[0,-.5],[1,0],[-1,0],[0,1],[0,-1]])if(walkable(this.map,p.x+ox,p.y+oy)){p.x+=ox;p.y+=oy;break;}}}
   }
-  else if(p.state==='hurt'){if(!p.timer)p.state='idle';}
+  else if(p.state==='hurt'||p.state==='pray'){if(!p.timer)p.state='idle';}
   else{
    const ix=input.x||0,iy=input.y||0,len=Math.hypot(ix,iy);if(input.guard){p.state='guard';const t=this.target(p,4);if(t)p.angle=Math.atan2(t.y-p.y,t.x-p.x);}
    else p.state=len>.01?'walk':'idle';if(len>.01){if(!input.guard)p.angle=Math.atan2(iy,ix);this.move(p,ix/Math.max(1,len)*dt*(input.guard?1.15:3.1),iy/Math.max(1,len)*dt*(input.guard?1.15:3.1));p.step+=dt*9;}
