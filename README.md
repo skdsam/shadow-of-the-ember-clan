@@ -40,3 +40,7 @@ For browser QA, serve the folder with `python -m http.server 8765`, then open `h
   - **Ben Daglish** & **Anthony Lees** — Original iconic C64 SID soundtrack
 
 This independent tribute contains no copied *Last Ninja* sprites, recordings, or proprietary branding.
+
+## Contributing
+
+If anyone wants to contribute to this repository, please feel free to do so! Pull requests, ideas, and improvements are warmly welcomed to ensure that a great classic game is given a new life, continues to be improved, and keeps the original memories alive for fans old and new.
