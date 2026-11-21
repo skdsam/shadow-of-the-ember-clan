@@ -98,7 +98,7 @@ class Game{
  emit(type,data={}){this.events.push({type,...data});}
  loadLevel(index){
   this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.starCaches=[];this.inventory=[];this.puzzle=[];this.shrineCooldown=0;if(index===0||index===5)this.lives=3;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
-  this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:index===5?0:8,foodBag:0,angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
+  this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:index===5?0:8,foodBag:0,weapon:'katana',angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
   this.enemies=this.map.spawns.map((s,i)=>this.enemy(s,i));this.checkpoint=this.snapshot();this.emit('level',{index});
  }
  enemy(s,i){const boss=s.kind==='boss',hp=(boss?145+this.level*22:s.kind==='armour'?70:s.kind==='spear'?48:38)*(this.difficulty==='story'?.7:this.difficulty==='hard'?1.25:1);
@@ -146,13 +146,23 @@ class Game{
  advance(){if(!this.transitionReady)return false;if(this.level===4){this.completed=true;this.emit('complete');}else this.loadLevel(this.level+1);return true;}
  retry(){if(this.lives<=0){const lvl=this.level;this.loadLevel(lvl);this.lives=3;this.emit('message',{text:'All lives lost · Restarting level with 3 lives.'});return;}const s=JSON.parse(JSON.stringify(this.checkpoint)),deaths=this.deaths,lives=this.lives;this.restore(s);this.deaths=deaths;this.lives=lives;this.player.invuln=2;this.emit('message',{text:`The ember endures · ${this.lives} ${this.lives===1?'life':'lives'} remaining.`});}
  target(e,range){return this.enemies.filter(n=>n.hp>0&&dist(n,e)<range).sort((a,b)=>dist(a,e)-dist(b,e))[0];}
+ switchWeapon(){
+  const p=this.player,avail=['katana'];
+  if(p.stars>0)avail.push('stars');
+  if(this.inventory?.includes('claws'))avail.push('claws');
+  p.weapon=avail[(avail.indexOf(p.weapon||'katana')+1)%avail.length];
+  const names={katana:'Katana Sword',stars:'Ninja Stars (Shuriken)',claws:'Dragon Nails'};
+  this.emit('effect',{name:'guard'});
+  this.emit('message',{text:`Equipped: ${names[p.weapon]}`});
+  return p.weapon;
+ }
  eatFood(){
   const p=this.player;if(this.dead)return false;
   if(!p.foodBag){this.emit('effect',{name:'error'});this.emit('message',{text:'No food stored in HOLDING.'});return false;}
   if(p.hp>=100){this.emit('message',{text:'Health is already full.'});return false;}
   p.foodBag--;p.hp=Math.min(100,p.hp+25);this.emit('effect',{name:'relic'});this.emit('message',{text:`Ate fruit · +25% health (${p.foodBag} left)`});return true;
  }
- attack(){const p=this.player;if(this.dead||p.cooldown>0||p.state==='dodge')return;const target=this.target(p,2.1);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.state='attack';p.timer=.34;p.cooldown=.43;p.combo=(p.combo+1)%3;p.hitDone=false;this.emit('effect',{name:'sword'});}
+ attack(){const p=this.player;if(this.dead||p.cooldown>0||p.state==='dodge')return;if(p.weapon==='stars'&&p.stars>0){this.throwStar();if(p.stars<=0)p.weapon='katana';return;}const target=this.target(p,2.1);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.state='attack';p.timer=.34;p.cooldown=.43;p.combo=(p.combo+1)%3;p.hitDone=false;this.emit('effect',{name:'sword'});}
  throwStar(){const p=this.player;if(this.dead||p.throwCD>0||p.state==='dodge')return;if(!p.stars){this.emit('message',{text:'No shuriken. Rest at a shrine to replenish them.'});return;}
   const target=this.target(p,8);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.stars--;p.throwCD=.45;this.projectiles.push({x:p.x,y:p.y,dx:Math.cos(p.angle)*10,dy:Math.sin(p.angle)*10,life:1.2,owner:'player',kind:'star',damage:24});this.emit('effect',{name:'throw'});}
  dodge(input={}){const p=this.player;if(this.dead||p.stamina<30||p.state==='dodge'||p.state==='attack')return;const moving=Math.hypot(input.x||0,input.y||0)>.01;let dx=moving?input.x:Math.cos(p.angle),dy=moving?input.y:Math.sin(p.angle),len=Math.hypot(dx,dy);p.dodgeX=dx/len;p.dodgeY=dy/len;p.angle=Math.atan2(p.dodgeY,p.dodgeX);p.state='dodge';p.timer=.42;p.dodgeDur=.42;p.jumpZ=0;p.invuln=.45;p.stamina-=30;this.emit('effect',{name:'dodge'});}
@@ -169,7 +179,7 @@ class Game{
   dt=Math.min(.04,Math.max(0,dt));if(this.dead||this.completed||this.transitionReady)return;this.time+=dt;this.shrineCooldown=Math.max(0,this.shrineCooldown-dt);const p=this.player;
   p.cooldown=Math.max(0,p.cooldown-dt);p.throwCD=Math.max(0,p.throwCD-dt);p.invuln=Math.max(0,p.invuln-dt);p.timer=Math.max(0,p.timer-dt);p.stamina=Math.min(100,p.stamina+dt*(p.state==='guard'?4:23));
   if(p.state==='attack'){
-   if(!p.hitDone&&p.timer<.2){p.hitDone=true;for(const e of this.enemies){const d=dist(p,e),a=Math.atan2(e.y-p.y,e.x-p.x);if(d<1.65&&Math.cos(a-p.angle)>-.1&&this.lineClear(p,e))this.hurtEnemy(e,p.combo===0?29:22);}}
+   if(!p.hitDone&&p.timer<.2){p.hitDone=true;const mult=p.weapon==='claws'?1.4:1;for(const e of this.enemies){const d=dist(p,e),a=Math.atan2(e.y-p.y,e.x-p.x);if(d<1.65&&Math.cos(a-p.angle)>-.1&&this.lineClear(p,e))this.hurtEnemy(e,Math.round((p.combo===0?29:22)*mult));}}
    if(p.timer===0)p.state='idle';
   }else if(p.state==='dodge'){
    const prog=1-p.timer/(p.dodgeDur||.42);p.jumpZ=Math.sin(prog*Math.PI)*1.15;

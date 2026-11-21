@@ -15,6 +15,7 @@ const TRACK_MODES = [
   { v: 6, label: 'Preview: Ending (V)' }
 ];
 let trackIdx = 0, rewardUntil = 0, combatUntil = 0, hitBannerUntil = 0, lastStepFloor = -1, lastRoomKey = '';
+let roomDrawProg = 1; // 0 -> 1 progressive C64 scene draw-in animation
 let gamePhase = 'title'; // 'title' -> 'prologue' -> 'playing'
 
 const introOverlay = document.getElementById('intro-overlay');
@@ -435,6 +436,7 @@ window.addEventListener('keydown', e => {
   else if (k === ' ') game.dodge(getMove());
   else if (k === 'e') game.interact();
   else if (k === 'h') game.eatFood();
+  else if (k === 'q' || k === 'tab') { e.preventDefault(); game.switchWeapon(); }
   else if (k === 'v') cycleTrack();
   else if (k === 'm') toggleMute();
 });
@@ -466,6 +468,7 @@ function toggleMute() {
 document.getElementById('track-btn').onclick = cycleTrack;
 document.getElementById('mute-btn').onclick = toggleMute;
 document.getElementById('side-canvas').onclick = () => { unlockAudio(); game.eatFood(); };
+document.getElementById('bottom-canvas').onclick = () => { unlockAudio(); game.switchWeapon(); };
 
 let lastTime = performance.now();
 function animate(now) {
@@ -473,7 +476,7 @@ function animate(now) {
   const dt = Math.min(0.04, (now - lastTime) / 1000);
   lastTime = now;
 
-  if (gamePhase === 'playing' && !game.dead) {
+  if (gamePhase === 'playing' && !game.dead && roomDrawProg >= 1) {
     if (keys.has('j')) game.attack();
     game.update(dt, getMove());
   }
@@ -512,6 +515,17 @@ function animate(now) {
     if (lastRoomKey) score.effect('room');
     lastRoomKey = rk;
     buildRoom(rx, ry);
+    roomDrawProg = 0;
+  }
+
+  // Progressive C64 scene draw-in animation (reveals room elements back-to-front!)
+  if (roomDrawProg < 1) {
+    roomDrawProg = Math.min(1, roomDrawProg + dt * 1.9);
+    const total = roomGroup.children.length;
+    const cutoff = Math.floor(total * roomDrawProg);
+    for (let i = 0; i < total; i++) {
+      roomGroup.children[i].visible = i <= cutoff;
+    }
   }
 
   // Page-by-page Orthographic Camera Snap
@@ -788,10 +802,15 @@ function drawC64PixelHUD(p, eRatio, nearObj, now) {
   sideCtx.fillRect(8, 23, Math.round(72 * eRatio), 9);
   drawPixelText(sideCtx, '. WOUNDS .', 44, 42, '#ffffff', 1);
 
-  // Lower box: . USING . -> Pixel Katana -> . HOLDING . -> Held items
+  // Lower box: . USING . -> Equipped Weapon (Katana / Stars / Dragon Nails) -> . HOLDING .
   drawPixelText(sideCtx, nearObj ? '. COLLECT .' : '. USING .', 44, 66, '#ffffff', 1);
   if (nearObj && ['food', 'stars', 'key', 'claws', 'relic'].includes(nearObj.type)) {
     drawPixelIcon(sideCtx, nearObj.type, 38, 79);
+  } else if (p.weapon === 'stars' && p.stars > 0) {
+    drawPixelIcon(sideCtx, 'stars', 30, 79);
+    drawPixelText(sideCtx, 'X' + p.stars, 52, 83, '#d8e8ff', 1);
+  } else if (p.weapon === 'claws' && game.inventory.includes('claws')) {
+    drawPixelIcon(sideCtx, 'claws', 36, 78);
   } else {
     drawPixelKatana(sideCtx, 17, 81);
   }
