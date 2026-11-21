@@ -680,10 +680,7 @@ function animate(now) {
         mesh = createCharacterMesh('#2e6b5e', '#d8c088', false, false);
       } else if (o.type === 'shrine') {
         mesh = createCharacterMesh('#c87828', '#f0d890', false, false);
-        mesh.userData.armL.rotation.x = -0.85;
-        mesh.userData.armR.rotation.x = -0.85;
-        mesh.userData.armL.rotation.z = -0.3;
-        mesh.userData.armR.rotation.z = 0.3;
+        if (mesh.userData.armR) mesh.userData.armR.rotation.x = -0.85;
       } else {
         const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'key' ? '#e8c840' : o.type === 'claws' ? '#f0a030' : o.type === 'node' ? '#a8a8a8' : o.type === 'shrine' ? '#60f0b0' : '#d86050';
         const geo = o.type === 'node' ? sharedObjGeos.node : (o.type === 'relic' || o.type === 'stars') ? sharedObjGeos.oct : o.type === 'food' ? sharedObjGeos.food : (o.type === 'key' || o.type === 'claws') ? sharedObjGeos.torus : sharedObjGeos.cyl;
