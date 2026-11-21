@@ -433,6 +433,7 @@ window.addEventListener('keydown', e => {
   else if (k === 'k') game.throwStar();
   else if (k === ' ') game.dodge(getMove());
   else if (k === 'e') game.interact();
+  else if (k === 'h') game.eatFood();
   else if (k === 'v') cycleTrack();
   else if (k === 'm') toggleMute();
 });
@@ -463,6 +464,7 @@ function toggleMute() {
 
 document.getElementById('track-btn').onclick = cycleTrack;
 document.getElementById('mute-btn').onclick = toggleMute;
+document.getElementById('eat-btn').onclick = () => { unlockAudio(); game.eatFood(); };
 
 let lastTime = performance.now();
 function animate(now) {
@@ -633,6 +635,10 @@ function animate(now) {
   document.getElementById('wounds-bar').style.width = Math.max(0, p.hp) + '%';
   document.getElementById('relics-txt').textContent = `RELICS: ${game.relics.length} / 3`;
   document.getElementById('puzzle-txt').textContent = `STONES: ${game.puzzle.length} / 3`;
+  const eatBtn = document.getElementById('eat-btn');
+  eatBtn.textContent = `🍎 FRUIT: ${p.foodBag || 0} [H]`;
+  eatBtn.disabled = !(p.foodBag > 0);
+  eatBtn.style.opacity = p.foodBag > 0 ? '1' : '0.45';
   document.getElementById('weaponry-txt').textContent = `SHURIKEN × ${String(p.stars).padStart(2, '0')}`;
 
   renderer.render(scene, camera);

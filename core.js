@@ -95,7 +95,7 @@ class Game{
  emit(type,data={}){this.events.push({type,...data});}
  loadLevel(index){
   this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.puzzle=[];this.shrineCooldown=0;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
-  this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:8,angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
+  this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:8,foodBag:0,angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
   this.enemies=this.map.spawns.map((s,i)=>this.enemy(s,i));this.checkpoint=this.snapshot();this.emit('level',{index});
  }
  enemy(s,i){const boss=s.kind==='boss',hp=(boss?145+this.level*22:s.kind==='armour'?70:s.kind==='spear'?48:38)*(this.difficulty==='story'?.7:this.difficulty==='hard'?1.25:1);
@@ -116,7 +116,7 @@ class Game{
  nearestObject(){return this.map.objects.filter(o=>!(o.type==='relic'&&this.relics.includes(+o.id.slice(-1)))&&!(o.type==='food'&&this.foods.includes(o.id))).map(o=>({o,d:dist(o,this.player)})).filter(v=>v.d<1.55).sort((a,b)=>a.d-b.d)[0]?.o;}
  interact(){
   if(this.dead)return;const o=this.nearestObject();if(!o){this.emit('message',{text:'Find a shrine, relic, or numbered stone. Press Tab for your map.'});return;}
-  if(o.type==='food'){if(!this.foods.includes(o.id)){this.foods.push(o.id);this.player.hp=Math.min(100,this.player.hp+25);this.emit('effect',{name:'relic'});this.emit('message',{text:'Found tree fruit · Restored 25% health'});}return;}
+  if(o.type==='food'){if(!this.foods.includes(o.id)){this.foods.push(o.id);this.player.foodBag=(this.player.foodBag||0)+1;this.emit('effect',{name:'relic'});this.emit('message',{text:`Stored fruit in bag (${this.player.foodBag}) · Press [H] to eat`});}return;}
   if(o.type==='guide'){this.emit('dialogue',{title:'Sora · shrine keeper',text:this.data.clue+' Recover the three ember relics, then challenge the guardian at the northern altar. Rest at the lantern shrine to save your journey.'});return;}
   if(o.type==='shrine'){
    if(this.shrineCooldown>0){const m=Math.floor(this.shrineCooldown/60),s=Math.ceil(this.shrineCooldown%60);this.emit('effect',{name:'error'});this.emit('message',{text:`The shrine rests · Pray again in ${m}:${String(s%60).padStart(2,'0')} (or next level)`});return;}
@@ -137,6 +137,12 @@ class Game{
  advance(){if(!this.transitionReady)return false;if(this.level===4){this.completed=true;this.emit('complete');}else this.loadLevel(this.level+1);return true;}
  retry(){const s=JSON.parse(JSON.stringify(this.checkpoint)),deaths=this.deaths;this.restore(s);this.deaths=deaths;this.player.invuln=2;this.emit('message',{text:'The ember endures. Restored at your last shrine.'});}
  target(e,range){return this.enemies.filter(n=>n.hp>0&&dist(n,e)<range).sort((a,b)=>dist(a,e)-dist(b,e))[0];}
+ eatFood(){
+  const p=this.player;if(this.dead)return false;
+  if(!p.foodBag){this.emit('effect',{name:'error'});this.emit('message',{text:'No food stored in HOLDING.'});return false;}
+  if(p.hp>=100){this.emit('message',{text:'Health is already full.'});return false;}
+  p.foodBag--;p.hp=Math.min(100,p.hp+25);this.emit('effect',{name:'relic'});this.emit('message',{text:`Ate fruit · +25% health (${p.foodBag} left)`});return true;
+ }
  attack(){const p=this.player;if(this.dead||p.cooldown>0||p.state==='dodge')return;const target=this.target(p,2.1);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.state='attack';p.timer=.34;p.cooldown=.43;p.combo=(p.combo+1)%3;p.hitDone=false;this.emit('effect',{name:'sword'});}
  throwStar(){const p=this.player;if(this.dead||p.throwCD>0||p.state==='dodge')return;if(!p.stars){this.emit('message',{text:'No shuriken. Rest at a shrine to replenish them.'});return;}
   const target=this.target(p,8);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.stars--;p.throwCD=.45;this.projectiles.push({x:p.x,y:p.y,dx:Math.cos(p.angle)*10,dy:Math.sin(p.angle)*10,life:1.2,owner:'player',kind:'star',damage:24});this.emit('effect',{name:'throw'});}

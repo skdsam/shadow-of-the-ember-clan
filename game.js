@@ -70,7 +70,7 @@ document.addEventListener('keydown',e=>{
  }
  if(inForm)return;if([' ','arrowup','arrowdown','arrowleft','arrowright','tab'].includes(k)&&state==='playing')e.preventDefault();if(k==='m'&&!e.repeat){toggleMusic();return;}if(k==='v'&&!e.repeat){cycleTrack();return;}
  if(['intro','ending'].includes(state)&&['enter','escape',' '].includes(k)){e.preventDefault();endCinema();return;}
- if(state!=='playing')return;keys.add(k);if(e.repeat)return;const mappings={j:'attack',k:'throw',' ':'dodge',e:'interact',escape:'pause',p:'pause',tab:'map'};if(mappings[k])action(mappings[k]);
+ if(state!=='playing')return;keys.add(k);if(e.repeat)return;if(k==='h'){game.eatFood();processEvents();return;}const mappings={j:'attack',k:'throw',' ':'dodge',e:'interact',escape:'pause',p:'pause',tab:'map'};if(mappings[k])action(mappings[k]);
 });document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 $('game').addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();$('game').focus();audio();action(e.button===2?'throw':'attack');});$('game').addEventListener('contextmenu',e=>e.preventDefault());
 $('new-game').onclick=newGame;$('continue-game').onclick=continueGame;$('continue-game').hidden=!saved;$('show-settings').onclick=showSettings;$('show-controls').onclick=showControls;$('footer-controls').onclick=showControls;$('show-credits').onclick=showCredits;$('skip-intro').onclick=endCinema;$('sound-button').onclick=toggleMusic;$('track-button').onclick=cycleTrack;$('home').onclick=e=>{e.preventDefault();if(state==='playing')pause();};
