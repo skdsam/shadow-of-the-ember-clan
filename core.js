@@ -17,9 +17,10 @@ function createMap(index){
  if(index===5){
   const tiles=Array.from({length:SIZE},(_,y)=>Array.from({length:SIZE},(_,x)=>0));
   const props=[];
-  // 3x3 grid of 9x9 rooms with continuous edge-to-edge grey isometric paths (tile 4)
-  for(let x=0;x<SIZE;x++){for(const y of [4,5,12,13,22,23])tiles[y][x]=4;}
-  for(let y=0;y<SIZE;y++){for(const x of [4,5,12,13,21,22])tiles[y][x]=4;}
+  // 3x3 grid of 9x9 rooms connected internally; NO paths lead off the outer world edges
+  for(let x=2;x<=22;x++){for(const y of [22,23])tiles[y][x]=4;}
+  for(let x=4;x<=22;x++){for(const y of [4,5,12,13])tiles[y][x]=4;}
+  for(let y=4;y<=23;y++){for(const x of [4,5,12,13,21,22])tiles[y][x]=4;}
   // River at x=18 with wooden/stone bridges (tile 3) where paths cross
   for(let y=0;y<SIZE;y++)tiles[y][18]=(y===4||y===5||y===12||y===13||y===22||y===23)?3:1;
   // Place boulders and C64 pixel trees strictly on the grass off-path

@@ -254,10 +254,11 @@ function buildRoom(rx, ry) {
       const tVal = game.map.tiles[z][x];
       if (tVal === 4 || tVal === 1 || tVal === 3) {
         addTile(x, z, tVal);
-        if (x === minX) for (let k = 1; k <= 14; k++) addTile(x - k, z, tVal);
-        if (x === maxX - 1) for (let k = 1; k <= 14; k++) addTile(x + k, z, tVal);
-        if (z === minY) for (let k = 1; k <= 14; k++) addTile(x, z - k, tVal);
-        if (z === maxY - 1) for (let k = 1; k <= 14; k++) addTile(x, z + k, tVal);
+        const canExt = (nx, nz) => tVal === 1 || (nx >= 0 && nx < 26 && nz >= 0 && nz < 26 && game.map.tiles[nz][nx] === tVal);
+        if (x === minX && (tVal === 1 || (rx > 0 && canExt(x - 1, z)))) for (let k = 1; k <= 14; k++) addTile(x - k, z, tVal);
+        if (x === maxX - 1 && (tVal === 1 || (rx < 2 && canExt(x + 1, z)))) for (let k = 1; k <= 14; k++) addTile(x + k, z, tVal);
+        if (z === minY && (tVal === 1 || (ry > 0 && canExt(x, z - 1)))) for (let k = 1; k <= 14; k++) addTile(x, z - k, tVal);
+        if (z === maxY - 1 && (tVal === 1 || (ry < 2 && canExt(x, z + 1)))) for (let k = 1; k <= 14; k++) addTile(x, z + k, tVal);
       }
     }
   }
@@ -277,7 +278,7 @@ function buildRoom(rx, ry) {
     for (let x = minX - 4; x < maxX + 4; x++) {
       const gx = Math.max(0, Math.min(25, x)), gz = Math.max(0, Math.min(25, z));
       const tileHere = game.map.tiles[gz][gx];
-      const onRoadLine = [4, 5, 12, 13, 22, 23].includes(z) || [4, 5, 12, 13, 21, 22, 18].includes(x);
+      const onRoadLine = (game.map.tiles[gz]?.[gx] === 4 || game.map.tiles[gz]?.[gx] === 1 || game.map.tiles[gz]?.[gx] === 3);
       if (tileHere !== 0 || onRoadLine) continue;
 
       const hash = Math.abs((x * 73 + z * 139 + rx * 17 + ry * 31) % 100);
