@@ -25,14 +25,14 @@ Rest at a lantern shrine to heal, refill shuriken and save. Death and Continue r
 - concepts/ — approved visual direction and generated presentation artwork.
 - core.js — DOM-independent simulation, campaign and saves.
 - art.js / render.js — original pixel sprites and isometric scene renderer.
-- audio.js — original locally synthesized music and effects.
+- **audio.js** — chiptune score and sound effects recreated by **SkdSam** to evoke the atmosphere and sounds of the original game.
 - game.js — controls, menus, transitions and storage.
 
 For browser QA, serve the folder with `python -m http.server 8765`, then open `http://localhost:8765`. The game also runs directly from disk.
 
 ## Credits & Inspiration
 
-- **Creator & Creative Direction**: **SkdSam** — *The Last Ninja* was a childhood game I played and loved growing up, and those fond memories directly inspired me to build *Shadow of the Ember Clan*.
+- **Creator, Creative Direction & Score / Sound Recreation**: **SkdSam** — *The Last Ninja* was a childhood game I played and loved growing up, and those fond memories directly inspired me to build *Shadow of the Ember Clan* and recreate its synthesized score and sound effects based on the classic game.
 - **Original *The Last Ninja* (1987) Creators & Rights Holders**: Full respect and credit to **System 3** and the legendary team behind the original Commodore 64 classic:
   - **Mark Cale** — System 3 founder, creator, designer & producer
   - **John Twiddy** — Original C64 programming & engine
