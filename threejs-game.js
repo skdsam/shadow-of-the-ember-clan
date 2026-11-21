@@ -516,10 +516,10 @@ function toggleMute() {
   score.apply();
 }
 
-document.getElementById('track-btn').onclick = cycleTrack;
-document.getElementById('mute-btn').onclick = toggleMute;
-document.getElementById('side-canvas').onclick = () => { unlockAudio(); game.eatFood(); };
-document.getElementById('bottom-canvas').onclick = () => { unlockAudio(); game.switchWeapon(); };
+const _trackBtn = document.getElementById('track-btn'); if (_trackBtn) _trackBtn.onclick = cycleTrack;
+const _muteBtn = document.getElementById('mute-btn'); if (_muteBtn) _muteBtn.onclick = toggleMute;
+const _sideCanvas = document.getElementById('side-canvas'); if (_sideCanvas) _sideCanvas.onclick = () => { unlockAudio(); game.eatFood(); };
+const _bottomCanvas = document.getElementById('bottom-canvas'); if (_bottomCanvas) _bottomCanvas.onclick = () => { unlockAudio(); game.switchWeapon(); };
 
 let lastTime = performance.now(), rafId = 0, isDisposed = false;
 function animate(now) {
