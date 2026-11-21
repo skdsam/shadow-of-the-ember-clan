@@ -31,7 +31,7 @@ function createMap(index){
   const objects=[{id:'shrine',type:'shrine',x:2.5,y:21.2},{id:'guide',type:'guide',x:6.5,y:22.5},
   {id:'relic0',type:'relic',x:4.5,y:4.5},{id:'relic1',type:'relic',x:21.5,y:22.5},{id:'relic2',type:'relic',x:21.5,y:12.5},
   {id:'node0',type:'node',number:0,x:4.5,y:13.5},{id:'node1',type:'node',number:1,x:12.5,y:12.5},{id:'node2',type:'node',number:2,x:21.5,y:14.5},
-  {id:'food0',type:'food',x:6.4,y:19.5},{id:'food1',type:'food',x:14.4,y:16.5},{id:'food2',type:'food',x:23.4,y:8.5},
+  {id:'food0',type:'food',x:6.1,y:19.5},{id:'food1',type:'food',x:14.1,y:16.5},{id:'food2',type:'food',x:23.1,y:8.5},
   {id:'stars0',type:'stars',x:4.5,y:18.5},{id:'stars1',type:'stars',x:12.5,y:22.5},{id:'stars2',type:'stars',x:13.5,y:4.5},
   {id:'altar',type:'altar',x:21.5,y:4.5}];
   const spawns=[
