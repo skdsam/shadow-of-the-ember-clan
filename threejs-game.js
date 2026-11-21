@@ -219,15 +219,15 @@ sun.shadow.camera.left = -d; sun.shadow.camera.right = d;
 sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
 scene.add(sun); scene.add(sun.target);
 
-// Base Grass Ground (tiled pixel grass texture, extra-large so edges never show)
+// Base Grass Ground (tiled pixel grass texture, covers full 81x81 world)
 grassTex.wrapS = grassTex.wrapT = THREE.RepeatWrapping;
-grassTex.repeat.set(60, 60);
+grassTex.repeat.set(120, 120);
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(140, 140),
+  new THREE.PlaneGeometry(260, 260),
   new THREE.MeshBasicMaterial({ map: grassTex })
 );
 ground.rotation.x = -Math.PI / 2;
-ground.position.set(13, -0.02, 13);
+ground.position.set(40, -0.02, 40);
 scene.add(ground);
 
 const roomGroup = new THREE.Group();
@@ -235,8 +235,9 @@ scene.add(roomGroup);
 
 function buildRoom(rx, ry) {
   while (roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
-  const minX = rx * 9, maxX = Math.min(26, minX + 9);
-  const minY = ry * 9, maxY = Math.min(26, minY + 9);
+  const M = game.map.size || 26, maxRoom = Math.floor(M / 9) - 1;
+  const minX = rx * 9, maxX = Math.min(M, minX + 9);
+  const minY = ry * 9, maxY = Math.min(M, minY + 9);
 
   const pathMat = new THREE.MeshLambertMaterial({ map: pathTex });
   const waterMat = new THREE.MeshLambertMaterial({ map: waterTex });
@@ -255,11 +256,11 @@ function buildRoom(rx, ry) {
       const tVal = game.map.tiles[z][x];
       if (tVal === 4 || tVal === 1 || tVal === 3) {
         addTile(x, z, tVal);
-        const canExt = (nx, nz) => tVal === 1 || (nx >= 0 && nx < 26 && nz >= 0 && nz < 26 && game.map.tiles[nz][nx] === tVal);
+        const canExt = (nx, nz) => tVal === 1 || (nx >= 0 && nx < M && nz >= 0 && nz < M && game.map.tiles[nz][nx] === tVal);
         if (x === minX && (tVal === 1 || (rx > 0 && canExt(x - 1, z)))) for (let k = 1; k <= 14; k++) addTile(x - k, z, tVal);
-        if (x === maxX - 1 && (tVal === 1 || (rx < 2 && canExt(x + 1, z)))) for (let k = 1; k <= 14; k++) addTile(x + k, z, tVal);
+        if (x === maxX - 1 && (tVal === 1 || (rx < maxRoom && canExt(x + 1, z)))) for (let k = 1; k <= 14; k++) addTile(x + k, z, tVal);
         if (z === minY && (tVal === 1 || (ry > 0 && canExt(x, z - 1)))) for (let k = 1; k <= 14; k++) addTile(x, z - k, tVal);
-        if (z === maxY - 1 && (tVal === 1 || (ry < 2 && canExt(x, z + 1)))) for (let k = 1; k <= 14; k++) addTile(x, z + k, tVal);
+        if (z === maxY - 1 && (tVal === 1 || (ry < maxRoom && canExt(x, z + 1)))) for (let k = 1; k <= 14; k++) addTile(x, z + k, tVal);
       }
     }
   }
@@ -277,14 +278,14 @@ function buildRoom(rx, ry) {
   const soilGeo = new THREE.PlaneGeometry(1.4, 1.4);
   for (let z = minY - 4; z < maxY + 4; z++) {
     for (let x = minX - 4; x < maxX + 4; x++) {
-      const gx = Math.max(0, Math.min(25, x)), gz = Math.max(0, Math.min(25, z));
+      const gx = Math.max(0, Math.min(M - 1, x)), gz = Math.max(0, Math.min(M - 1, z));
       const tileHere = game.map.tiles[gz][gx];
       const onRoadLine = (game.map.tiles[gz]?.[gx] === 4 || game.map.tiles[gz]?.[gx] === 1 || game.map.tiles[gz]?.[gx] === 3);
       if (tileHere !== 0 || onRoadLine) continue;
 
       const hash = Math.abs((x * 73 + z * 139 + rx * 17 + ry * 31) % 100);
-      const nearPath = (game.map.tiles[gz]?.[Math.min(25, gx + 1)] === 4 || game.map.tiles[gz]?.[Math.max(0, gx - 1)] === 4 ||
-                        game.map.tiles[Math.min(25, gz + 1)]?.[gx] === 4 || game.map.tiles[Math.max(0, gz - 1)]?.[gx] === 4);
+      const nearPath = (game.map.tiles[gz]?.[Math.min(M - 1, gx + 1)] === 4 || game.map.tiles[gz]?.[Math.max(0, gx - 1)] === 4 ||
+                        game.map.tiles[Math.min(M - 1, gz + 1)]?.[gx] === 4 || game.map.tiles[Math.max(0, gz - 1)]?.[gx] === 4);
 
       // Brown earth & root patches beneath trees/shrubs (Amiga Remix feel)
       if (hash < 28) {

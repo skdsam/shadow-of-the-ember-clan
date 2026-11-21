@@ -15,32 +15,37 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function createMap(index){
  if(index===5){
-  const tiles=Array.from({length:SIZE},(_,y)=>Array.from({length:SIZE},(_,x)=>0));
+  const MSIZE=81,tiles=Array.from({length:MSIZE},()=>Array.from({length:MSIZE},()=>0));
   const props=[];
-  // 3x3 grid of 9x9 rooms connected internally; NO paths lead off the outer world edges
-  for(let x=2;x<=22;x++){for(const y of [22,23])tiles[y][x]=4;}
-  for(let x=4;x<=22;x++){for(const y of [4,5,12,13])tiles[y][x]=4;}
-  for(let y=4;y<=23;y++){for(const x of [4,5,12,13,21,22])tiles[y][x]=4;}
-  // River at x=18 with wooden/stone bridges (tile 3) where paths cross
-  for(let y=0;y<SIZE;y++)tiles[y][18]=(y===4||y===5||y===12||y===13||y===22||y===23)?3:1;
-  // Place boulders and C64 pixel trees strictly on the grass off-path
-  const boulders=[[2,20,1.2],[7,19,0.9],[2,10,1.3],[7,15,0.8],[10,10,1.1],[15,15,0.9],[10,2,1.2],[15,7,0.8],[20,19,1.0],[24,20,0.7],[20,10,1.1],[24,2,1.3]];
-  boulders.forEach(([x,y,s])=>{props.push({x:x+.5,y:y+.5,type:'boulder',scale:s,w:1,h:1});});
-  const trees=[[1,24,0],[8,21,1],[1,15,0],[7,9,1],[10,19,0],[16,24,1],[9,16,0],[16,9,1],[10,7,0],[16,1,1],[19,24,0],[24,15,1],[19,9,0],[24,7,1]];
-  trees.forEach(([x,y,v])=>{props.push({x:x+.5,y:y+.5,type:'c64tree',variant:v,w:1,h:1});});
-  const objects=[{id:'shrine',type:'shrine',x:2.5,y:21.2},{id:'guide',type:'guide',x:6.5,y:21.2},
-  {id:'relic0',type:'relic',x:3.2,y:4.5},{id:'relic1',type:'relic',x:20.2,y:21.2},{id:'relic2',type:'relic',x:20.2,y:11.2},
-  {id:'node0',type:'node',number:0,x:3.2,y:13.5},{id:'node1',type:'node',number:1,x:11.2,y:11.2},{id:'node2',type:'node',number:2,x:20.2,y:14.5},
-  {id:'food0',type:'food',x:6.1,y:19.5},{id:'food1',type:'food',x:14.1,y:16.5},{id:'food2',type:'food',x:23.1,y:8.5},
-  {id:'stars0',type:'stars',x:3.2,y:18.5},{id:'stars1',type:'stars',x:11.2,y:21.2},{id:'stars2',type:'stars',x:13.5,y:3.2},
-  {id:'key0',type:'key',x:6.1,y:11.2},{id:'claws0',type:'claws',x:15.5,y:21.2},
-  {id:'altar',type:'altar',x:21.5,y:3.2}];
-  const spawns=[
-   {x:4.5,y:12.5,kind:'sword'},{x:6.5,y:4.5,kind:'archer'},
-   {x:12.5,y:22.5,kind:'sword'},{x:14.5,y:13.5,kind:'spear'},{x:12.5,y:4.5,kind:'armour'},
-   {x:21.5,y:20.5,kind:'spear'},{x:22.5,y:12.5,kind:'sword'}
+  // 9x9 grid of 9x9 screens (81x81 tiles = 3x the width & height); NO paths lead off outer world edges
+  const roads=[4,5,22,23,40,41,58,59,76,77];
+  for(let x=2;x<=77;x++){for(const y of [76,77])tiles[y][x]=4;}
+  for(let x=4;x<=77;x++){for(const y of [4,5,22,23,40,41,58,59])tiles[y][x]=4;}
+  for(let y=4;y<=77;y++){for(const x of roads)tiles[y][x]=4;}
+  // Two rivers at x=31 and x=67 with wooden/stone bridges (tile 3) where paths cross
+  for(let y=0;y<MSIZE;y++){
+   tiles[y][31]=roads.includes(y)?3:1;
+   tiles[y][67]=roads.includes(y)?3:1;
+  }
+  const objects=[
+   {id:'shrine',type:'shrine',x:2.5,y:75.2},{id:'guide',type:'guide',x:6.5,y:75.2},
+   {id:'relic0',type:'relic',x:3.2,y:4.5},{id:'relic1',type:'relic',x:42.1,y:39.2},{id:'relic2',type:'relic',x:75.2,y:75.2},
+   {id:'node0',type:'node',number:0,x:21.2,y:57.2},{id:'node1',type:'node',number:1,x:39.2,y:21.2},{id:'node2',type:'node',number:2,x:57.2,y:57.2},
+   {id:'food0',type:'food',x:6.1,y:61.5},{id:'food1',type:'food',x:24.1,y:75.2},{id:'food2',type:'food',x:24.1,y:39.2},
+   {id:'food3',type:'food',x:42.1,y:57.2},{id:'food4',type:'food',x:60.1,y:21.2},{id:'food5',type:'food',x:78.1,y:39.2},
+   {id:'stars0',type:'stars',x:3.2,y:56.5},{id:'stars1',type:'stars',x:21.2,y:75.2},{id:'stars2',type:'stars',x:39.2,y:57.2},
+   {id:'stars3',type:'stars',x:57.2,y:39.2},{id:'stars4',type:'stars',x:57.2,y:3.2},
+   {id:'key0',type:'key',x:24.1,y:21.2},{id:'claws0',type:'claws',x:60.1,y:75.2},
+   {id:'altar',type:'altar',x:76.5,y:3.2}
   ];
-  return{tiles,props,objects,spawns,pathOnly:true};
+  const spawns=[
+   {x:4.5,y:58.5,kind:'sword'},{x:4.5,y:22.5,kind:'archer'},{x:22.5,y:76.5,kind:'sword'},
+   {x:22.5,y:40.5,kind:'spear'},{x:22.5,y:4.5,kind:'armour'},{x:40.5,y:76.5,kind:'sword'},
+   {x:40.5,y:58.5,kind:'archer'},{x:40.5,y:40.5,kind:'armour'},{x:40.5,y:22.5,kind:'spear'},
+   {x:40.5,y:4.5,kind:'sword'},{x:58.5,y:76.5,kind:'spear'},{x:58.5,y:40.5,kind:'armour'},
+   {x:58.5,y:22.5,kind:'archer'},{x:76.5,y:58.5,kind:'sword'},{x:76.5,y:22.5,kind:'armour'}
+  ];
+  return{tiles,props,objects,spawns,pathOnly:true,size:MSIZE};
  }
  const random=rng(8734+index*311), tiles=Array.from({length:SIZE},(_,y)=>Array.from({length:SIZE},(_,x)=>x===0||y===0||x===SIZE-1||y===SIZE-1?2:0));
  const props=[];
@@ -80,17 +85,17 @@ function walkable(map,x,y,r=.22){
  return true;
 }
 function path(map,from,to){
- const sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y);
+ const M=map.size||SIZE,sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y);
  if(sx===tx&&sy===ty)return[{x:to.x,y:to.y}];
- const queue=[[sx,sy]],seen=new Set([sy*SIZE+sx]),parent=new Map();let found=false;
+ const queue=[[sx,sy]],seen=new Set([sy*M+sx]),parent=new Map();let found=false;
  for(let n=0;n<queue.length;n++){
   const [x,y]=queue[n];if(x===tx&&y===ty){found=true;break;}
-  for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,key=ny*SIZE+nx;
-   if(nx<0||ny<0||nx>=SIZE||ny>=SIZE||seen.has(key)||!walkable(map,nx+.5,ny+.5))continue;
-   seen.add(key);parent.set(key,y*SIZE+x);queue.push([nx,ny]);}
+  for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,key=ny*M+nx;
+   if(nx<0||ny<0||nx>=M||ny>=M||seen.has(key)||!walkable(map,nx+.5,ny+.5))continue;
+   seen.add(key);parent.set(key,y*M+x);queue.push([nx,ny]);}
  }
- if(!found)return[];let cur=ty*SIZE+tx,result=[];
- while(cur!==sy*SIZE+sx){result.push({x:cur%SIZE+.5,y:Math.floor(cur/SIZE)+.5});cur=parent.get(cur);if(cur===undefined)return[];}
+ if(!found)return[];let cur=ty*M+tx,result=[];
+ while(cur!==sy*M+sx){result.push({x:cur%M+.5,y:Math.floor(cur/M)+.5});cur=parent.get(cur);if(cur===undefined)return[];}
  return result.reverse();
 }
 class Game{
@@ -98,7 +103,7 @@ class Game{
  emit(type,data={}){this.events.push({type,...data});}
  loadLevel(index){
   this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.starCaches=[];this.inventory=[];this.puzzle=[];this.shrineCooldown=0;if(index===0||index===5)this.lives=3;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
-  this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:index===5?0:8,foodBag:0,weapon:'katana',angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
+  this.player={x:index===5?4.5:2.5,y:index===5?76.5:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:index===5?0:8,foodBag:0,weapon:'katana',angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
   this.enemies=this.map.spawns.map((s,i)=>this.enemy(s,i));this.checkpoint=this.snapshot();this.emit('level',{index});
  }
  enemy(s,i){const boss=s.kind==='boss',hp=(boss?145+this.level*22:s.kind==='armour'?70:s.kind==='spear'?48:38)*(this.difficulty==='story'?.7:this.difficulty==='hard'?1.25:1);
@@ -110,12 +115,12 @@ class Game{
   this.player={...this.player,...s.player,state:'idle',timer:0,invuln:1};this.relics=[...s.relics];this.inventory=[...(s.inventory||[])];this.foods=[...(s.foods||[])];this.starCaches=[...(s.starCaches||[])];this.puzzle=[...s.puzzle];this.solved=!!s.solved;this.bossStarted=!!s.bossStarted;this.bossDefeated=!!s.bossDefeated;
   this.enemies=s.enemies.map(e=>({...e,path:[],pathTimer:0,state:e.hp<=0?'dead':'idle',timer:0,cooldown:1}));this.checkpoint=JSON.parse(JSON.stringify(s));return true;
  }
- static validSave(s){return !!(s&&s.version===1&&Number.isInteger(s.level)&&s.level>=0&&s.level<=5&&['story','normal','hard'].includes(s.difficulty)&&s.player&&Number.isFinite(s.player.x)&&Number.isFinite(s.player.y)&&s.player.x>0&&s.player.x<25&&s.player.y>0&&s.player.y<25&&Number.isFinite(s.player.hp)&&Array.isArray(s.enemies)&&s.enemies.length<=10&&s.enemies.every(e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.hp))&&Array.isArray(s.relics)&&s.relics.every(x=>Number.isInteger(x)&&x>=0&&x<=2)&&Array.isArray(s.puzzle)&&s.puzzle.length<=3&&s.puzzle.every(x=>Number.isInteger(x)&&x>=0&&x<=2));}
+ static validSave(s){const lim=s?.level===5?80:25;return !!(s&&s.version===1&&Number.isInteger(s.level)&&s.level>=0&&s.level<=5&&['story','normal','hard'].includes(s.difficulty)&&s.player&&Number.isFinite(s.player.x)&&Number.isFinite(s.player.y)&&s.player.x>0&&s.player.x<lim&&s.player.y>0&&s.player.y<lim&&Number.isFinite(s.player.hp)&&Array.isArray(s.enemies)&&s.enemies.length<=25&&s.enemies.every(e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.hp))&&Array.isArray(s.relics)&&s.relics.every(x=>Number.isInteger(x)&&x>=0&&x<=2)&&Array.isArray(s.puzzle)&&s.puzzle.length<=3&&s.puzzle.every(x=>Number.isInteger(x)&&x>=0&&x<=2));}
  move(e,dx,dy){
   const shrine=e!==this.player&&this.map.objects.find(o=>o.type==='shrine');
   const lockedBridge=e===this.player&&this.map.pathOnly&&!this.inventory?.includes('key');
-  if(walkable(this.map,e.x+dx,e.y)&&(!shrine||Math.hypot(e.x+dx-shrine.x,e.y-shrine.y)>=3.5)&&(!lockedBridge||e.x+dx<17.6))e.x+=dx;
-  else if(lockedBridge&&e.x+dx>=17.6&&!this._keyWarned){this._keyWarned=true;this.emit('message',{text:'Bridge locked · Find the Iron Key to cross East'});}
+  if(walkable(this.map,e.x+dx,e.y)&&(!shrine||Math.hypot(e.x+dx-shrine.x,e.y-shrine.y)>=3.5)&&(!lockedBridge||e.x+dx<66.6))e.x+=dx;
+  else if(lockedBridge&&e.x+dx>=66.6&&!this._keyWarned){this._keyWarned=true;this.emit('message',{text:'East River Bridge locked · Find the Iron Key'});}
   if(walkable(this.map,e.x,e.y+dy)&&(!shrine||Math.hypot(e.x-shrine.x,e.y+dy-shrine.y)>=3.5))e.y+=dy;
  }
  nearestObject(){return this.map.objects.filter(o=>!(o.type==='relic'&&this.relics.includes(+o.id.slice(-1)))&&!(o.type==='food'&&this.foods.includes(o.id))&&!(o.type==='stars'&&this.starCaches.includes(o.id))&&!(o.type==='key'&&this.inventory.includes('key'))&&!(o.type==='claws'&&this.inventory.includes('claws'))).map(o=>({o,d:dist(o,this.player)})).filter(v=>v.d<(this.map.pathOnly?2.1:1.55)).sort((a,b)=>a.d-b.d)[0]?.o;}
@@ -140,7 +145,7 @@ class Game{
    if(this.bossDefeated){this.transitionReady=true;this.emit('travel',{text:this.data.story});return;}
    if(this.level===5&&!this.inventory.includes('claws')){this.emit('message',{text:'Need Dragon Nails to break the northern altar seal!'});return;}
    if(this.relics.length<3||!this.solved){this.emit('message',{text:`Altar sealed. Relics ${this.relics.length}/3 · mechanism ${this.solved?'awake':'asleep'}. ${this.data.clue}`});return;}
-   if(!this.bossStarted){this.bossStarted=true;this.enemies.push(this.enemy({x:22.5,y:4.5,kind:'boss'},99));this.emit('boss',{name:this.data.boss});this.emit('message',{text:this.data.boss+' awakens. Keep moving. Watch the windup.'});}
+   if(!this.bossStarted){this.bossStarted=true;const bx=this.level===5?76.5:22.5;this.enemies.push(this.enemy({x:bx,y:4.5,kind:'boss'},99));this.emit('boss',{name:this.data.boss});this.emit('message',{text:this.data.boss+' awakens. Keep moving. Watch the windup.'});}
   }
  }
  advance(){if(!this.transitionReady)return false;if(this.level===4){this.completed=true;this.emit('complete');}else this.loadLevel(this.level+1);return true;}
