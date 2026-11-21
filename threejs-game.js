@@ -601,6 +601,13 @@ function animate(now) {
     playerMesh.userData.legL.rotation.x = -1.35;
     playerMesh.userData.legR.rotation.x = -1.35;
     playerMesh.userData.armR.rotation.x = -1.2;
+  } else if (p.state === 'pray') {
+    playerMesh.visible = true;
+    playerMesh.userData.rollNode.position.y = -0.26;
+    playerMesh.userData.rollNode.rotation.set(0.28, 0, 0);
+    playerMesh.userData.legL.rotation.x = -1.25;
+    playerMesh.userData.legR.rotation.x = -1.25;
+    playerMesh.userData.armR.rotation.x = -0.95;
   } else if (p.state === 'dodge') {
     playerMesh.visible = !(p.invuln > 0 && Math.floor(now / 80) % 2 === 1);
     playerMesh.userData.rollNode.position.y = 0;

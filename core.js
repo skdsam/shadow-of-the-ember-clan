@@ -187,7 +187,7 @@ class Game{
   if(o.type==='guide'){this.emit('dialogue',{title:'Sora · shrine keeper',text:this.data.clue+' Recover the three ember relics, then challenge the guardian at the northern altar. Rest at the lantern shrine to save your journey.'});return;}
   if(o.type==='shrine'){
    if(this.shrineCooldown>0){const m=Math.floor(this.shrineCooldown/60),s=Math.ceil(this.shrineCooldown%60);this.emit('effect',{name:'error'});this.emit('message',{text:`The shrine rests · Pray again in ${m}:${String(s%60).padStart(2,'0')} (or next level)`});return;}
-   this.player.hp=100;this.player.stamina=100;if(this.level!==5)this.player.stars=8;this.shrineCooldown=300;this.checkpoint=this.snapshot();this.emit('save');this.emit('message',{text:'You pray at the shrine · Full health restored (5:00 cooldown)'});this.emit('effect',{name:'save'});return;
+   this.player.angle=Math.atan2(o.y-this.player.y,o.x-this.player.x);this.player.state='pray';this.player.timer=1.2;this.player.hp=100;this.player.stamina=100;if(this.level!==5)this.player.stars=8;this.shrineCooldown=300;this.checkpoint=this.snapshot();this.emit('save');this.emit('message',{text:'You kneel and pray · Full health restored (5:00 cooldown)'});this.emit('effect',{name:'save'});return;
   }
   if(o.type==='relic'){const n=+o.id.slice(-1);if(!this.relics.includes(n)){this.relics.push(n);this.emit('effect',{name:'relic'});this.emit('message',{text:`Ember relic recovered · ${this.relics.length} / 3`});}return;}
   if(o.type==='node'){
