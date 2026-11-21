@@ -1,6 +1,14 @@
 # Shadow of the Ember Clan
 
-An original five-region isometric pixel action adventure. Open **index.html** in a modern browser, or double-click **Play.cmd** on Windows. No install, account, download or build step is required. Use fullscreen for the strongest presentation.
+A modern 3D isometric rebuild of **The Last Ninja** with a twist — blending classic C64-inspired pixel aesthetics, multi-region maze exploration, and chiptune synthesis with Three.js 3D isometric action, kneeling shrine prayer healing, weapon switching, and dynamic boss encounters. Open **index.html** (or **threejs.html**) in a modern browser, or double-click **Play.cmd** on Windows. No install, account, download or build step is required. Use fullscreen for the strongest presentation.
+
+## Demo
+
+![Title Screen](docs/title-screen.png)
+
+![Wastelands Isometric Gameplay](docs/gameplay-wastelands.png)
+
+![Kneeling Prayer at the Monk Shrine](docs/shrine-prayer.png)
 
 ## Play
 
