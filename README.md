@@ -4,9 +4,9 @@ A modern 3D isometric rebuild of **The Last Ninja** with a twist — blending cl
 
 ## Demo
 
-![Wastelands Isometric Gameplay](docs/gameplay-shrine-monk.png)
+![Title & Intro Screen](docs/intro-screen.png)
 
-![Kneeling Prayer at the Monk Shrine](docs/gameplay-praying.png)
+![Wastelands Isometric Gameplay](docs/gameplay-shrine-monk.png)
 
 ## Play
 
