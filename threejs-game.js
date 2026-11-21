@@ -6,13 +6,13 @@ game.loadLevel(5); // Classic C64 Wastelands path-only map
 
 const score = new EmberScore();
 const TRACK_MODES = [
-  { v: -1, label: 'Music: Auto (V)' },
-  { v: 3, label: 'Preview: Intro (V)' },
-  { v: 0, label: 'Preview: 1 Explore (V)' },
-  { v: 1, label: 'Preview: 2 Battle (V)' },
-  { v: 2, label: 'Preview: 3 Safe (V)' },
-  { v: 7, label: 'Preview: Danger (V)' },
-  { v: 6, label: 'Preview: Ending (V)' }
+  { v: -1, label: 'BGM: AUTO [V]' },
+  { v: 3, label: 'BGM: INTRO [V]' },
+  { v: 0, label: 'BGM: EXPLORE' },
+  { v: 1, label: 'BGM: BATTLE' },
+  { v: 2, label: 'BGM: SAFE' },
+  { v: 7, label: 'BGM: DANGER' },
+  { v: 6, label: 'BGM: ENDING' }
 ];
 let trackIdx = 0, rewardUntil = 0, combatUntil = 0, hitBannerUntil = 0, lastStepFloor = -1, lastRoomKey = '';
 let roomDrawProg = 1; // 0 -> 1 progressive C64 scene draw-in animation
@@ -508,14 +508,12 @@ function cycleTrack() {
   score.previewC64 = m.v >= 0;
   score.step = 0;
   if (score.ctx) score.next = score.ctx.currentTime + 0.02;
-  document.getElementById('track-btn').textContent = m.label;
   unlockAudio();
 }
 
 function toggleMute() {
   score.musicVolume = score.musicVolume > 0 ? 0 : 0.45;
   score.apply();
-  document.getElementById('mute-btn').textContent = score.musicVolume > 0 ? 'Music: On (M)' : 'Music: Off (M)';
 }
 
 document.getElementById('track-btn').onclick = cycleTrack;
@@ -991,6 +989,15 @@ function drawC64PixelHUD(p, eRatio, nearObj, now) {
     mc.fillStyle = '#000000'; mc.fillRect(0, 0, 320, 13);
     const rawMsg = (document.getElementById('hud-msg').textContent || '').replace(/[·]/g, '.').toUpperCase();
     drawPixelText(mc, rawMsg.slice(0, 52), 160, 4, '#ffffff', 1);
+  }
+  const tc = document.getElementById('track-canvas')?.getContext('2d');
+  const muc = document.getElementById('mute-canvas')?.getContext('2d');
+  if (tc && muc) {
+    tc.imageSmoothingEnabled = false; muc.imageSmoothingEnabled = false;
+    tc.fillStyle = '#000000'; tc.fillRect(0, 0, 96, 9);
+    drawPixelText(tc, TRACK_MODES[trackIdx].label, 48, 2, '#f0d060', 1);
+    muc.fillStyle = '#000000'; muc.fillRect(0, 0, 54, 9);
+    drawPixelText(muc, score.musicVolume > 0 ? 'SFX: ON' : 'SFX: OFF', 27, 2, score.musicVolume > 0 ? '#88e0a0' : '#e85050', 1);
   }
 }
 

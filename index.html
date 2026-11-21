@@ -7,10 +7,11 @@
   *{box-sizing:border-box}
   body{margin:0;min-height:100vh;background:#0a0e12;color:#e0e0e0;font-family:"Courier New",monospace;display:grid;place-items:center;padding:16px}
   .shell{width:min(1200px,100%)}
-  .topbar{display:flex;justify-content:flex-end;align-items:center;padding:0 4px 12px;font-size:12px}
-  .topbar a,.topbar button{color:#e0e0e0;background:#1a2028;border:1px solid #58626b;padding:7px 12px;text-decoration:none;cursor:pointer;font:inherit;font-size:11px}
-  .topbar button:hover,.topbar a:hover{background:#2d3642;border-color:#88e0a0}
   .frame{width:100%;aspect-ratio:8/5;background:#000;border:3px solid #ffffff;box-shadow:0 18px 60px #000b;display:flex}
+  .pixel-audio-bar{position:absolute;top:8px;right:8px;z-index:12;display:flex;gap:6px}
+  .pixel-audio-btn{background:#000000d8;border:2px solid #ffffff;padding:3px 6px;cursor:pointer;display:block}
+  .pixel-audio-btn:hover{background:#242424;border-color:#f0d060}
+  .pixel-audio-btn canvas{display:block;height:14px;width:auto;image-rendering:pixelated;pointer-events:none}
   .c64-grid{flex:1;display:grid;grid-template-columns:1fr 264px;grid-template-rows:1fr 142px;background:#000}
   #viewport{position:relative;overflow:hidden;background:#18dc6c;border-right:3px solid #ffffff;border-bottom:3px solid #ffffff}
   .intro-overlay{position:absolute;inset:0;z-index:10;background:#07121c;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:20px;text-align:center}
@@ -34,15 +35,13 @@
 </head>
 <body>
  <main class="shell">
-  <div class="topbar">
-   <div style="display:flex;gap:8px">
-    <button id="track-btn">Music: Auto (V)</button>
-    <button id="mute-btn">Music: On (M)</button>
-   </div>
-  </div>
   <div class="frame">
    <div class="c64-grid">
    <div id="viewport">
+    <div class="pixel-audio-bar">
+     <button id="track-btn" class="pixel-audio-btn" title="Switch Music Track (V)"><canvas id="track-canvas" width="96" height="9"></canvas></button>
+     <button id="mute-btn" class="pixel-audio-btn" title="Toggle Music (M)"><canvas id="mute-canvas" width="54" height="9"></canvas></button>
+    </div>
     <div id="intro-overlay" class="intro-overlay">
      <img id="intro-img" src="concepts/01-loading-screen.png" decoding="async" alt="Shadows of the Ember Clan Loading Screen">
      <div class="intro-shade"></div>
