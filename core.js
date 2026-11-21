@@ -145,7 +145,7 @@ class Game{
  }
  advance(){if(!this.transitionReady)return false;if(this.level===4){this.completed=true;this.emit('complete');}else this.loadLevel(this.level+1);return true;}
  retry(){if(this.lives<=0){const lvl=this.level;this.loadLevel(lvl);this.lives=3;this.emit('message',{text:'All lives lost · Restarting level with 3 lives.'});return;}const s=JSON.parse(JSON.stringify(this.checkpoint)),deaths=this.deaths,lives=this.lives;this.restore(s);this.deaths=deaths;this.lives=lives;this.player.invuln=2;this.emit('message',{text:`The ember endures · ${this.lives} ${this.lives===1?'life':'lives'} remaining.`});}
- target(e,range){return this.enemies.filter(n=>n.hp>0&&dist(n,e)<range).sort((a,b)=>dist(a,e)-dist(b,e))[0];}
+ target(e,range){return this.enemies.filter(n=>n.hp>0&&dist(n,e)<range&&(!this.map.pathOnly||(Math.floor(n.x/9)===Math.floor(e.x/9)&&Math.floor(n.y/9)===Math.floor(e.y/9)))).sort((a,b)=>dist(a,e)-dist(b,e))[0];}
  switchWeapon(){
   const p=this.player,avail=['katana'];
   if(p.stars>0)avail.push('stars');
@@ -164,7 +164,7 @@ class Game{
  }
  attack(){const p=this.player;if(this.dead||p.cooldown>0||p.state==='dodge')return;if(p.weapon==='stars'&&p.stars>0){this.throwStar();if(p.stars<=0)p.weapon='katana';return;}const target=this.target(p,2.1);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.state='attack';p.timer=.34;p.cooldown=.43;p.combo=(p.combo+1)%3;p.hitDone=false;this.emit('effect',{name:'sword'});}
  throwStar(){const p=this.player;if(this.dead||p.throwCD>0||p.state==='dodge')return;if(!p.stars){this.emit('message',{text:'No shuriken. Rest at a shrine to replenish them.'});return;}
-  const target=this.target(p,8);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.stars--;p.throwCD=.45;this.projectiles.push({x:p.x,y:p.y,dx:Math.cos(p.angle)*10,dy:Math.sin(p.angle)*10,life:1.2,owner:'player',kind:'star',damage:24});this.emit('effect',{name:'throw'});}
+  const target=this.target(p,8);if(target)p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.stars--;p.throwCD=.45;this.projectiles.push({x:p.x,y:p.y,rx:Math.floor(p.x/9),ry:Math.floor(p.y/9),dx:Math.cos(p.angle)*10,dy:Math.sin(p.angle)*10,life:1.2,owner:'player',kind:'star',damage:24});this.emit('effect',{name:'throw'});}
  dodge(input={}){const p=this.player;if(this.dead||p.stamina<30||p.state==='dodge'||p.state==='attack')return;const moving=Math.hypot(input.x||0,input.y||0)>.01;let dx=moving?input.x:Math.cos(p.angle),dy=moving?input.y:Math.sin(p.angle),len=Math.hypot(dx,dy);p.dodgeX=dx/len;p.dodgeY=dy/len;p.angle=Math.atan2(p.dodgeY,p.dodgeX);p.state='dodge';p.timer=.42;p.dodgeDur=.42;p.jumpZ=0;p.invuln=.45;p.stamina-=30;this.emit('effect',{name:'dodge'});}
  hurtPlayer(amount,source){const p=this.player;if(p.invuln>0||this.dead)return false;
   const a=Math.atan2(source.y-p.y,source.x-p.x),dot=Math.cos(a-p.angle);
