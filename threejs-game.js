@@ -490,7 +490,7 @@ function animate(now) {
     } else if (ev.type === 'death') {
       score.paused = true; score.apply();
       score.effect('death');
-      document.getElementById('hud-msg').textContent = 'Defeated! Returning to shrine...';
+      document.getElementById('hud-msg').textContent = game.lives > 0 ? `Defeated! ${game.lives} ${game.lives === 1 ? 'life' : 'lives'} remaining...` : 'GAME OVER · Out of lives! Restarting...';
       setTimeout(() => { game.retry(); combatUntil = 0; score.paused = false; score.apply(); }, 2600);
     }
   }
@@ -640,6 +640,8 @@ function animate(now) {
   eatBtn.disabled = !(p.foodBag > 0);
   eatBtn.style.opacity = p.foodBag > 0 ? '1' : '0.45';
   document.getElementById('weaponry-txt').textContent = `SHURIKEN × ${String(p.stars).padStart(2, '0')}`;
+  const pips = document.querySelectorAll('#lives-row .life-pip');
+  pips.forEach((pip, idx) => pip.classList.toggle('lost', idx >= game.lives));
 
   renderer.render(scene, camera);
 }

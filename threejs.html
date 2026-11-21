@@ -31,7 +31,10 @@
   .bar-enemy{height:100%;background:#8c78d8;width:100%;transition:width .08s}
   .bar-wounds{height:100%;background:#d86050;width:100%;transition:width .08s}
   .bar-power{height:100%;background:linear-gradient(90deg,#e06048,#f0c050,#88e0a0);width:100%;transition:width .06s}
-  .hud-bottom{grid-column:1 / -1;display:grid;grid-template-columns:190px 1fr 220px;align-items:center;padding:8px 18px;gap:16px}
+  .hud-bottom{grid-column:1 / -1;display:grid;grid-template-columns:150px 140px 1fr 240px;align-items:center;padding:8px 18px;gap:12px}
+  .lives-row{display:flex;justify-content:center;gap:10px;height:36px;align-items:center;margin-bottom:8px}
+  .life-pip{width:16px;height:16px;background:#e04848;border:2px solid #ffffff;box-shadow:0 0 0 2px #000000,inset -3px -3px 0 #981818}
+  .life-pip.lost{background:#181818;border-color:#383838;box-shadow:none}
   #power-canvas{display:block;margin:0 auto 4px;width:112px;height:58px;image-rendering:pixelated;background:#000000}
   .logo-c64{text-align:center;line-height:1.1}
   .logo-c64 .t1{color:#8878d8;font-size:13px;letter-spacing:2px;font-weight:bold}
@@ -84,6 +87,10 @@
     <div style="text-align:center">
      <canvas id="power-canvas" width="112" height="58"></canvas>
      <div class="hud-title" style="margin:0">· POWER ·</div>
+    </div>
+    <div style="text-align:center">
+     <div id="lives-row" class="lives-row"><span class="life-pip"></span><span class="life-pip"></span><span class="life-pip"></span></div>
+     <div class="hud-title" style="margin:0">· LIVES ·</div>
     </div>
     <div style="text-align:center">
      <div id="hit-badge" style="height:18px;font-size:12px;color:#f0d060;letter-spacing:2px;margin-bottom:2px"></div>

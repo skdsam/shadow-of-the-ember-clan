@@ -91,10 +91,10 @@ function path(map,from,to){
  return result.reverse();
 }
 class Game{
- constructor(options={}){this.difficulty=options.difficulty||'normal';this.events=[];this.time=0;this.totalKills=0;this.deaths=0;this.completed=false;this.loadLevel(0);}
+ constructor(options={}){this.difficulty=options.difficulty||'normal';this.events=[];this.time=0;this.totalKills=0;this.deaths=0;this.lives=3;this.completed=false;this.loadLevel(0);}
  emit(type,data={}){this.events.push({type,...data});}
  loadLevel(index){
-  this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.puzzle=[];this.shrineCooldown=0;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
+  this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.puzzle=[];this.shrineCooldown=0;if(index===0||index===5)this.lives=3;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
   this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:8,foodBag:0,angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
   this.enemies=this.map.spawns.map((s,i)=>this.enemy(s,i));this.checkpoint=this.snapshot();this.emit('level',{index});
  }
@@ -135,7 +135,7 @@ class Game{
   }
  }
  advance(){if(!this.transitionReady)return false;if(this.level===4){this.completed=true;this.emit('complete');}else this.loadLevel(this.level+1);return true;}
- retry(){const s=JSON.parse(JSON.stringify(this.checkpoint)),deaths=this.deaths;this.restore(s);this.deaths=deaths;this.player.invuln=2;this.emit('message',{text:'The ember endures. Restored at your last shrine.'});}
+ retry(){if(this.lives<=0){const lvl=this.level;this.loadLevel(lvl);this.lives=3;this.emit('message',{text:'All lives lost · Restarting level with 3 lives.'});return;}const s=JSON.parse(JSON.stringify(this.checkpoint)),deaths=this.deaths,lives=this.lives;this.restore(s);this.deaths=deaths;this.lives=lives;this.player.invuln=2;this.emit('message',{text:`The ember endures · ${this.lives} ${this.lives===1?'life':'lives'} remaining.`});}
  target(e,range){return this.enemies.filter(n=>n.hp>0&&dist(n,e)<range).sort((a,b)=>dist(a,e)-dist(b,e))[0];}
  eatFood(){
   const p=this.player;if(this.dead)return false;
@@ -151,7 +151,7 @@ class Game{
   const a=Math.atan2(source.y-p.y,source.x-p.x),dot=Math.cos(a-p.angle);
   if(p.state==='guard'&&dot>-.2&&p.stamina>=12){p.stamina=Math.max(0,p.stamina-12);this.emit('effect',{name:'guard'});this.emit('impact',{x:p.x,y:p.y,color:'#eed8a3'});return false;}
   p.hp=Math.max(0,p.hp-amount*(this.difficulty==='story'?.5:this.difficulty==='hard'?1.35:1));p.invuln=.7;this.emit('effect',{name:'hurt'});this.emit('impact',{x:p.x,y:p.y,color:'#e57952'});if(p.state!=='attack'){p.state='hurt';p.timer=.18;}
-  if(p.hp<=0){this.dead=true;p.state='dead';this.deaths++;this.emit('death');}return true;
+  if(p.hp<=0){this.dead=true;p.state='dead';this.deaths++;this.lives=Math.max(0,(this.lives??3)-1);this.emit('death');}return true;
  }
  hurtEnemy(e,amount){if(e.hp<=0)return;e.hp=Math.max(0,e.hp-amount);e.hitFlash=.15;e.alert=true;this.emit('impact',{x:e.x,y:e.y,color:e.kind==='boss'?'#ffc778':'#d38c69'});this.emit('effect',{name:'hit'});
   if(e.hp<=0){e.state='dead';e.timer=1.6;this.player.kills++;this.totalKills++;this.player.stamina=Math.min(100,this.player.stamina+12);if(e.kind==='boss'){this.bossDefeated=true;this.player.hp=Math.min(100,this.player.hp+35);this.emit('bossDefeated');this.emit('message',{text:'The guardian falls. Return to the altar [E] to break the seal.'});this.emit('effect',{name:'victory'});}else if(e.id%2===0){this.player.stars=Math.min(12,this.player.stars+1);}}
