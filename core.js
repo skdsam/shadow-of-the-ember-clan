@@ -17,33 +17,83 @@ function createMap(index){
  if(index===5){
   const MSIZE=81,tiles=Array.from({length:MSIZE},()=>Array.from({length:MSIZE},()=>0));
   const props=[];
-  // 9x9 grid of 9x9 screens (81x81 tiles = 3x the width & height); NO paths lead off outer world edges
-  const roads=[4,5,22,23,40,41,58,59,76,77];
-  for(let x=2;x<=77;x++){for(const y of [76,77])tiles[y][x]=4;}
-  for(let x=4;x<=77;x++){for(const y of [4,5,22,23,40,41,58,59])tiles[y][x]=4;}
-  for(let y=4;y<=77;y++){for(const x of roads)tiles[y][x]=4;}
-  // Two rivers at x=31 and x=67 with wooden/stone bridges (tile 3) where paths cross
+  // Helper to carve 2-tile-wide maze corridors between (x1,y1) and (x2,y2)
+  const carve=(x1,y1,x2,y2)=>{
+   const xmin=Math.min(x1,x2),xmax=Math.max(x1,x2),ymin=Math.min(y1,y2),ymax=Math.max(y1,y2);
+   for(let y=ymin;y<=ymax+1;y++)for(let x=xmin;x<=xmax+1;x++)if(y<MSIZE&&x<MSIZE)tiles[y][x]=4;
+  };
+  // 1. Start & West Maze (Sanctuary -> North -> Northwest Keep for IRON KEY, plus South-West dead-end spur)
+  carve(2,76,13,76);   // Starting Shrine & Sora corridor
+  carve(4,58,4,76);    // West road north from start
+  carve(4,58,22,58);   // Turn east to West Junction (22,58)
+  carve(22,58,22,76);  // South spur down
+  carve(22,76,31,76);  // Dead-end spur to Stars0 & Apple0
+  carve(22,22,22,58);  // Main trunk north to (22,22)
+  carve(4,40,22,40);   // West branch at y=40
+  carve(4,13,4,40);    // North up west flank to Stone I dead-end (4,13)
+  carve(4,22,22,22);   // Upper-west cross connector
+  carve(13,4,13,22);   // North ascent to Northwest Keep
+  carve(4,4,13,4);     // Northwest Keep dead-end (holds IRON KEY & Relic 1)
+
+  // 2. West River Crossing (x=31, bridge only at y=40..41) -> Central Valley Maze
+  carve(22,40,49,40);  // Cross West River at (31,40) into Central Hub (40,40) & (49,40)
+  carve(40,4,40,40);   // North central corridor up to Stone II dead-end (40,4)
+  carve(40,22,58,22);  // Northeast branch to (58,22)
+  carve(58,4,58,22);   // North dead-end spur to Stars2 (58,4)
+  carve(49,40,49,58);  // South central descent
+  carve(40,58,58,58);  // Lower central fork (west to 40,58; east to 58,58)
+  carve(40,58,40,67);  // Southwest canyon dead-end (holds Relic 2)
+  carve(58,58,58,76);  // Southeast canyon dead-end (holds DRAGON NAILS)
+
+  // 3. East River Crossing (x=67, bridge only at y=22..23) -> Eastern Citadel Maze
+  carve(58,22,76,22);  // Cross East River at (67,22) into Eastern Citadel (76,22)
+  carve(76,22,76,76);  // South Citadel road down to Stone III & Relic 3 dead-end (76,76)
+  carve(76,4,76,22);   // North Citadel ascent to Boss Altar (76,4)
+
+  // Two rivers at x=31 and x=67 with single bridges where the maze corridors cross
   for(let y=0;y<MSIZE;y++){
-   tiles[y][31]=roads.includes(y)?3:1;
-   tiles[y][67]=roads.includes(y)?3:1;
+   tiles[y][31]=(y===40||y===41)?3:1;
+   tiles[y][67]=(y===22||y===23)?3:1;
   }
+
+  // All 22 objects sit strictly OFF pathway tiles on adjacent grass margins
   const objects=[
    {id:'shrine',type:'shrine',x:2.5,y:75.2},{id:'guide',type:'guide',x:6.5,y:75.2},
-   {id:'relic0',type:'relic',x:3.2,y:4.5},{id:'relic1',type:'relic',x:42.1,y:39.2},{id:'relic2',type:'relic',x:75.2,y:75.2},
-   {id:'node0',type:'node',number:0,x:21.2,y:57.2},{id:'node1',type:'node',number:1,x:39.2,y:21.2},{id:'node2',type:'node',number:2,x:57.2,y:57.2},
-   {id:'food0',type:'food',x:6.1,y:61.5},{id:'food1',type:'food',x:24.1,y:75.2},{id:'food2',type:'food',x:24.1,y:39.2},
-   {id:'food3',type:'food',x:42.1,y:57.2},{id:'food4',type:'food',x:60.1,y:21.2},{id:'food5',type:'food',x:78.1,y:39.2},
-   {id:'stars0',type:'stars',x:3.2,y:56.5},{id:'stars1',type:'stars',x:21.2,y:75.2},{id:'stars2',type:'stars',x:39.2,y:57.2},
-   {id:'stars3',type:'stars',x:57.2,y:39.2},{id:'stars4',type:'stars',x:57.2,y:3.2},
-   {id:'key0',type:'key',x:24.1,y:21.2},{id:'claws0',type:'claws',x:60.1,y:75.2},
+   // Key & Dragon Nails in dedicated maze dead-ends requiring backtracking!
+   {id:'key0',type:'key',x:3.2,y:3.2},       // Northwest Keep dead-end -> backtrack to (31,40) bridge
+   {id:'claws0',type:'claws',x:60.1,y:75.2}, // Southeast Canyon dead-end -> backtrack to (67,22) bridge
+   // 3 Relics in deep maze corners
+   {id:'relic0',type:'relic',x:6.1,y:3.2},
+   {id:'relic1',type:'relic',x:39.2,y:67.5},
+   {id:'relic2',type:'relic',x:75.2,y:75.2},
+   // 3 Puzzle Stones (I, II, III)
+   {id:'node0',type:'node',number:0,x:3.2,y:13.5},
+   {id:'node1',type:'node',number:1,x:39.2,y:4.5},
+   {id:'node2',type:'node',number:2,x:75.2,y:57.2},
+   // 6 Apples (+25% HP)
+   {id:'food0',type:'food',x:29.5,y:75.2},{id:'food1',type:'food',x:6.1,y:39.2},
+   {id:'food2',type:'food',x:42.1,y:6.1},{id:'food3',type:'food',x:42.1,y:66.5},
+   {id:'food4',type:'food',x:60.1,y:20.8},{id:'food5',type:'food',x:78.1,y:75.2},
+   // 5 Ninja Star Caches (+5 each)
+   {id:'stars0',type:'stars',x:27.5,y:75.2},{id:'stars1',type:'stars',x:3.2,y:21.2},
+   {id:'stars2',type:'stars',x:57.2,y:4.5},{id:'stars3',type:'stars',x:57.2,y:75.2},
+   {id:'stars4',type:'stars',x:75.2,y:21.2},
+   // Northern Boss Altar
    {id:'altar',type:'altar',x:76.5,y:3.2}
   ];
+
+  // 28 Enemy Guards patrolling corridors, junctions, and treasure dead-ends
   const spawns=[
-   {x:4.5,y:58.5,kind:'sword'},{x:4.5,y:22.5,kind:'archer'},{x:22.5,y:76.5,kind:'sword'},
-   {x:22.5,y:40.5,kind:'spear'},{x:22.5,y:4.5,kind:'armour'},{x:40.5,y:76.5,kind:'sword'},
-   {x:40.5,y:58.5,kind:'archer'},{x:40.5,y:40.5,kind:'armour'},{x:40.5,y:22.5,kind:'spear'},
-   {x:40.5,y:4.5,kind:'sword'},{x:58.5,y:76.5,kind:'spear'},{x:58.5,y:40.5,kind:'armour'},
-   {x:58.5,y:22.5,kind:'archer'},{x:76.5,y:58.5,kind:'sword'},{x:76.5,y:22.5,kind:'armour'}
+   {x:4.5,y:65.5,kind:'sword'},{x:13.5,y:58.5,kind:'sword'},{x:22.5,y:67.5,kind:'spear'},
+   {x:28.5,y:76.5,kind:'archer'},{x:22.5,y:49.5,kind:'sword'},{x:13.5,y:40.5,kind:'spear'},
+   {x:4.5,y:31.5,kind:'archer'},{x:4.5,y:16.5,kind:'armour'},{x:13.5,y:22.5,kind:'sword'},
+   {x:13.5,y:11.5,kind:'spear'},{x:6.5,y:4.5,kind:'armour'},{x:22.5,y:31.5,kind:'archer'},
+   {x:35.5,y:40.5,kind:'sword'},{x:40.5,y:31.5,kind:'spear'},{x:40.5,y:13.5,kind:'armour'},
+   {x:49.5,y:22.5,kind:'archer'},{x:58.5,y:11.5,kind:'sword'},{x:49.5,y:49.5,kind:'spear'},
+   {x:40.5,y:62.5,kind:'armour'},{x:58.5,y:64.5,kind:'sword'},{x:58.5,y:73.5,kind:'armour'},
+   {x:62.5,y:22.5,kind:'spear'},{x:76.5,y:31.5,kind:'sword'},{x:76.5,y:49.5,kind:'archer'},
+   {x:76.5,y:67.5,kind:'armour'},{x:76.5,y:74.5,kind:'spear'},{x:76.5,y:14.5,kind:'sword'},
+   {x:76.5,y:8.5,kind:'armour'}
   ];
   return{tiles,props,objects,spawns,pathOnly:true,size:MSIZE};
  }
@@ -115,13 +165,16 @@ class Game{
   this.player={...this.player,...s.player,state:'idle',timer:0,invuln:1};this.relics=[...s.relics];this.inventory=[...(s.inventory||[])];this.foods=[...(s.foods||[])];this.starCaches=[...(s.starCaches||[])];this.puzzle=[...s.puzzle];this.solved=!!s.solved;this.bossStarted=!!s.bossStarted;this.bossDefeated=!!s.bossDefeated;
   this.enemies=s.enemies.map(e=>({...e,path:[],pathTimer:0,state:e.hp<=0?'dead':'idle',timer:0,cooldown:1}));this.checkpoint=JSON.parse(JSON.stringify(s));return true;
  }
- static validSave(s){const lim=s?.level===5?80:25;return !!(s&&s.version===1&&Number.isInteger(s.level)&&s.level>=0&&s.level<=5&&['story','normal','hard'].includes(s.difficulty)&&s.player&&Number.isFinite(s.player.x)&&Number.isFinite(s.player.y)&&s.player.x>0&&s.player.x<lim&&s.player.y>0&&s.player.y<lim&&Number.isFinite(s.player.hp)&&Array.isArray(s.enemies)&&s.enemies.length<=25&&s.enemies.every(e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.hp))&&Array.isArray(s.relics)&&s.relics.every(x=>Number.isInteger(x)&&x>=0&&x<=2)&&Array.isArray(s.puzzle)&&s.puzzle.length<=3&&s.puzzle.every(x=>Number.isInteger(x)&&x>=0&&x<=2));}
+ static validSave(s){const lim=s?.level===5?80:25;return !!(s&&s.version===1&&Number.isInteger(s.level)&&s.level>=0&&s.level<=5&&['story','normal','hard'].includes(s.difficulty)&&s.player&&Number.isFinite(s.player.x)&&Number.isFinite(s.player.y)&&s.player.x>0&&s.player.x<lim&&s.player.y>0&&s.player.y<lim&&Number.isFinite(s.player.hp)&&Array.isArray(s.enemies)&&s.enemies.length<=40&&s.enemies.every(e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.hp))&&Array.isArray(s.relics)&&s.relics.every(x=>Number.isInteger(x)&&x>=0&&x<=2)&&Array.isArray(s.puzzle)&&s.puzzle.length<=3&&s.puzzle.every(x=>Number.isInteger(x)&&x>=0&&x<=2));}
  move(e,dx,dy){
   const shrine=e!==this.player&&this.map.objects.find(o=>o.type==='shrine');
-  const lockedBridge=e===this.player&&this.map.pathOnly&&!this.inventory?.includes('key');
-  if(walkable(this.map,e.x+dx,e.y)&&(!shrine||Math.hypot(e.x+dx-shrine.x,e.y-shrine.y)>=3.5)&&(!lockedBridge||e.x+dx<66.6))e.x+=dx;
-  else if(lockedBridge&&e.x+dx>=66.6&&!this._keyWarned){this._keyWarned=true;this.emit('message',{text:'East River Bridge locked · Find the Iron Key'});}
-  if(walkable(this.map,e.x,e.y+dy)&&(!shrine||Math.hypot(e.x-shrine.x,e.y+dy-shrine.y)>=3.5))e.y+=dy;
+  const needKey=e===this.player&&this.map.pathOnly&&!this.inventory?.includes('key');
+  const needClaws=e===this.player&&this.map.pathOnly&&!this.inventory?.includes('claws');
+  const nx=e.x+dx,ny=e.y+dy;
+  if(needKey&&nx>=30.6&&e.x<30.6){if(!this._keyWarned){this._keyWarned=true;this.emit('message',{text:'West River Bridge locked · Find the Iron Key in the NW Keep!'});}return;}
+  if(needClaws&&nx>=66.6&&e.x<66.6){if(!this._clawWarned){this._clawWarned=true;this.emit('message',{text:'East Gorge Bridge blocked · Find Dragon Nails in the SE Canyon!'});}return;}
+  if(walkable(this.map,nx,e.y)&&(!shrine||Math.hypot(nx-shrine.x,e.y-shrine.y)>=3.5))e.x=nx;
+  if(walkable(this.map,e.x,ny)&&(!shrine||Math.hypot(e.x-shrine.x,ny-shrine.y)>=3.5))e.y=ny;
  }
  nearestObject(){return this.map.objects.filter(o=>!(o.type==='relic'&&this.relics.includes(+o.id.slice(-1)))&&!(o.type==='food'&&this.foods.includes(o.id))&&!(o.type==='stars'&&this.starCaches.includes(o.id))&&!(o.type==='key'&&this.inventory.includes('key'))&&!(o.type==='claws'&&this.inventory.includes('claws'))).map(o=>({o,d:dist(o,this.player)})).filter(v=>v.d<(this.map.pathOnly?2.1:1.55)).sort((a,b)=>a.d-b.d)[0]?.o;}
  interact(){
