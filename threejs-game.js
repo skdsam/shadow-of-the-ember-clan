@@ -229,19 +229,31 @@ scene.add(ground);
 const roomGroup = new THREE.Group();
 scene.add(roomGroup);
 
+// Shared Geometries & Materials (allocated ONCE to prevent GPU memory leaks & tab freeze!)
+const sharedPathMat = new THREE.MeshLambertMaterial({ map: pathTex });
+const sharedWaterMat = new THREE.MeshLambertMaterial({ map: waterTex });
+const sharedBridgeMat = new THREE.MeshLambertMaterial({ color: '#a87848' });
+const sharedTileGeo = new THREE.BoxGeometry(1, 0.06, 1);
+const sharedSoilMat = new THREE.MeshBasicMaterial({ map: soilTex });
+const sharedSoilGeo = new THREE.PlaneGeometry(1.4, 1.4);
+const sharedZenGeo = new THREE.CylinderGeometry(3.2, 3.3, 0.04, 24);
+const sharedZenMat = new THREE.MeshLambertMaterial({ color: '#b4c6b8' });
+const sharedRingGeo = new THREE.RingGeometry(3.25, 3.45, 32);
+const sharedRingMat = new THREE.MeshBasicMaterial({ color: '#60e8b0', side: THREE.DoubleSide });
+const spriteMatCache = new Map();
+function getSpriteMat(tex) {
+  if (!spriteMatCache.has(tex)) spriteMatCache.set(tex, new THREE.SpriteMaterial({ map: tex, transparent: true }));
+  return spriteMatCache.get(tex);
+}
+
 function buildRoom(rx, ry) {
   while (roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
   const M = game.map.size || 26, maxRoom = Math.floor(M / 9) - 1;
   const minX = rx * 9, maxX = Math.min(M, minX + 9);
   const minY = ry * 9, maxY = Math.min(M, minY + 9);
 
-  const pathMat = new THREE.MeshLambertMaterial({ map: pathTex });
-  const waterMat = new THREE.MeshLambertMaterial({ map: waterTex });
-  const bridgeMat = new THREE.MeshLambertMaterial({ color: '#a87848' });
-  const tileGeo = new THREE.BoxGeometry(1, 0.06, 1);
-
   const addTile = (tx, tz, tVal) => {
-    const m = new THREE.Mesh(tileGeo, tVal === 1 ? waterMat : tVal === 3 ? bridgeMat : pathMat);
+    const m = new THREE.Mesh(sharedTileGeo, tVal === 1 ? sharedWaterMat : tVal === 3 ? sharedBridgeMat : sharedPathMat);
     m.position.set(tx + 0.5, tVal === 1 ? -0.02 : 0.01, tz + 0.5);
     m.receiveShadow = true;
     roomGroup.add(m);
@@ -262,16 +274,13 @@ function buildRoom(rx, ry) {
   }
 
   const addBillboard = (tex, x, z, w, h) => {
-    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-    const sp = new THREE.Sprite(mat);
+    const sp = new THREE.Sprite(getSpriteMat(tex));
     sp.scale.set(w, h, 1);
     sp.position.set(x, h * 0.44, z);
     roomGroup.add(sp);
   };
 
   // Populate dense Japanese pixel-art landscape across the entire visible screen (even past 9x9 edges!)
-  const soilMat = new THREE.MeshBasicMaterial({ map: soilTex });
-  const soilGeo = new THREE.PlaneGeometry(1.4, 1.4);
   for (let z = minY - 4; z < maxY + 4; z++) {
     for (let x = minX - 4; x < maxX + 4; x++) {
       const gx = Math.max(0, Math.min(M - 1, x)), gz = Math.max(0, Math.min(M - 1, z));
@@ -283,9 +292,8 @@ function buildRoom(rx, ry) {
       const nearPath = (game.map.tiles[gz]?.[Math.min(M - 1, gx + 1)] === 4 || game.map.tiles[gz]?.[Math.max(0, gx - 1)] === 4 ||
                         game.map.tiles[Math.min(M - 1, gz + 1)]?.[gx] === 4 || game.map.tiles[Math.max(0, gz - 1)]?.[gx] === 4);
 
-      // Brown earth & root patches beneath trees/shrubs (Amiga Remix feel)
       if (hash < 28) {
-        const sp = new THREE.Mesh(soilGeo, soilMat);
+        const sp = new THREE.Mesh(sharedSoilGeo, sharedSoilMat);
         sp.rotation.x = -Math.PI / 2;
         sp.position.set(x + 0.5, 0.004, z + 0.5);
         roomGroup.add(sp);
@@ -317,18 +325,12 @@ function buildRoom(rx, ry) {
   // Serene Sanctuary Courtyard around the Shrine (no enemy can enter)
   const shrine = game.map.objects.find(o => o.type === 'shrine');
   if (shrine && shrine.x >= minX && shrine.x < maxX && shrine.y >= minY && shrine.y < maxY) {
-    const zenPad = new THREE.Mesh(
-      new THREE.CylinderGeometry(3.2, 3.3, 0.04, 24),
-      new THREE.MeshLambertMaterial({ color: '#b4c6b8' })
-    );
+    const zenPad = new THREE.Mesh(sharedZenGeo, sharedZenMat);
     zenPad.position.set(shrine.x, 0.025, shrine.y);
     zenPad.receiveShadow = true;
     roomGroup.add(zenPad);
 
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(3.25, 3.45, 32),
-      new THREE.MeshBasicMaterial({ color: '#60e8b0', side: THREE.DoubleSide })
-    );
+    const ring = new THREE.Mesh(sharedRingGeo, sharedRingMat);
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(shrine.x, 0.055, shrine.y);
     roomGroup.add(ring);
@@ -396,18 +398,32 @@ const playerMesh = createCharacterMesh('#060606', '#282828', false, true);
 scene.add(playerMesh);
 
 const enemyMeshes = new Map();
+const objectMeshes = new Map();
+const projectilePool = [];
 const objGroup = new THREE.Group();
 const fxGroup = new THREE.Group();
 scene.add(objGroup, fxGroup);
 
+const sharedSparkGeo = new THREE.BoxGeometry(0.09, 0.09, 0.09);
+const sharedStarGeo = new THREE.OctahedronGeometry(0.14);
+const sharedStarMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+const sharedObjGeos = {
+  node: new THREE.CylinderGeometry(0.32, 0.34, 0.05, 8),
+  oct: new THREE.OctahedronGeometry(0.22),
+  food: new THREE.SphereGeometry(0.18, 6, 5),
+  torus: new THREE.TorusGeometry(0.18, 0.06, 6, 8),
+  cyl: new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6)
+};
+
 const particles = [];
 function spawnHitSparks(x, z, color) {
+  const mat = new THREE.MeshBasicMaterial({ color });
   for (let i = 0; i < 8; i++) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.09), new THREE.MeshBasicMaterial({ color }));
+    const m = new THREE.Mesh(sharedSparkGeo, mat);
     m.position.set(x, 0.7, z);
     fxGroup.add(m);
     const a = (i / 8) * Math.PI * 2;
-    particles.push({ mesh: m, vx: Math.cos(a) * 3.2, vy: 2.8 + Math.random() * 2, vz: Math.sin(a) * 3.2, life: 0.35 });
+    particles.push({ mesh: m, mat, vx: Math.cos(a) * 3.2, vy: 2.8 + Math.random() * 2, vz: Math.sin(a) * 3.2, life: 0.35 });
   }
 }
 
@@ -467,9 +483,10 @@ document.getElementById('mute-btn').onclick = toggleMute;
 document.getElementById('side-canvas').onclick = () => { unlockAudio(); game.eatFood(); };
 document.getElementById('bottom-canvas').onclick = () => { unlockAudio(); game.switchWeapon(); };
 
-let lastTime = performance.now();
+let lastTime = performance.now(), rafId = 0, isDisposed = false;
 function animate(now) {
-  requestAnimationFrame(animate);
+  if (isDisposed) return;
+  rafId = requestAnimationFrame(animate);
   const dt = Math.min(0.04, (now - lastTime) / 1000);
   lastTime = now;
 
@@ -606,34 +623,49 @@ function animate(now) {
     }
   }
 
-  while (objGroup.children.length) objGroup.remove(objGroup.children[0]);
+  // Cached Object Meshes (ZERO per-frame geometry/material allocation!)
   for (const o of game.map.objects) {
-    if (Math.floor(o.x / 9) !== rx || Math.floor(o.y / 9) !== ry) continue;
-    if (o.type === 'relic' && game.relics.includes(+o.id.slice(-1))) continue;
-    if (o.type === 'food' && game.foods.includes(o.id)) continue;
-    if (o.type === 'stars' && game.starCaches.includes(o.id)) continue;
-    if (o.type === 'key' && game.inventory.includes('key')) continue;
-    if (o.type === 'claws' && game.inventory.includes('claws')) continue;
-    const readyShrine = o.type === 'shrine' && game.shrineCooldown <= 0;
-    if (o.type === 'guide') {
-      const sage = createCharacterMesh('#2e6b5e', '#d8c088', false, false);
-      sage.position.set(o.x, 0, o.y);
-      objGroup.add(sage);
-      continue;
+    let mesh = objectMeshes.get(o.id);
+    if (!mesh) {
+      if (o.type === 'guide') {
+        mesh = createCharacterMesh('#2e6b5e', '#d8c088', false, false);
+      } else {
+        const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'key' ? '#e8c840' : o.type === 'claws' ? '#f0a030' : o.type === 'node' ? '#a8a8a8' : o.type === 'shrine' ? '#60f0b0' : '#d86050';
+        const geo = o.type === 'node' ? sharedObjGeos.node : (o.type === 'relic' || o.type === 'stars') ? sharedObjGeos.oct : o.type === 'food' ? sharedObjGeos.food : (o.type === 'key' || o.type === 'claws') ? sharedObjGeos.torus : sharedObjGeos.cyl;
+        mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: col }));
+        mesh.castShadow = o.type !== 'node';
+      }
+      objectMeshes.set(o.id, mesh);
+      objGroup.add(mesh);
     }
-    const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'key' ? '#e8c840' : o.type === 'claws' ? '#f0a030' : o.type === 'node' ? (game.puzzle.includes(o.number) ? '#60f0b0' : '#a8a8a8') : o.type === 'shrine' ? (readyShrine ? '#60f0b0' : '#586898') : '#d86050';
-    const geo = o.type === 'node' ? new THREE.CylinderGeometry(0.32, 0.34, 0.05, 8) : o.type === 'relic' || o.type === 'stars' ? new THREE.OctahedronGeometry(0.22) : o.type === 'food' ? new THREE.SphereGeometry(0.18, 6, 5) : o.type === 'key' || o.type === 'claws' ? new THREE.TorusGeometry(0.18, 0.06, 6, 8) : new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6);
-    const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: col }));
-    mesh.position.set(o.x, o.type === 'node' ? 0.04 : (o.type === 'relic' || o.type === 'food' || o.type === 'stars' || o.type === 'key' || o.type === 'claws') ? 0.35 + Math.sin(now * 0.004) * 0.06 : 0.43, o.y);
+    const inRoom = Math.floor(o.x / 9) === rx && Math.floor(o.y / 9) === ry;
+    const collected = (o.type === 'relic' && game.relics.includes(+o.id.slice(-1))) ||
+                      (o.type === 'food' && game.foods.includes(o.id)) ||
+                      (o.type === 'stars' && game.starCaches.includes(o.id)) ||
+                      (o.type === 'key' && game.inventory.includes('key')) ||
+                      (o.type === 'claws' && game.inventory.includes('claws'));
+    mesh.visible = inRoom && !collected;
+    if (!mesh.visible) continue;
+    if (o.type === 'node') mesh.material.color.set(game.puzzle.includes(o.number) ? '#60f0b0' : '#a8a8a8');
+    else if (o.type === 'shrine') mesh.material.color.set(game.shrineCooldown <= 0 ? '#60f0b0' : '#586898');
+    mesh.position.set(o.x, o.type === 'guide' ? 0 : o.type === 'node' ? 0.04 : (o.type === 'relic' || o.type === 'food' || o.type === 'stars' || o.type === 'key' || o.type === 'claws') ? 0.35 + Math.sin(now * 0.004) * 0.06 : 0.43, o.y);
     if (o.type === 'stars' || o.type === 'key' || o.type === 'claws') mesh.rotation.y = now * 0.004;
-    mesh.castShadow = o.type !== 'node';
-    objGroup.add(mesh);
   }
-  for (const q of game.projectiles) {
-    if (Math.floor(q.x / 9) !== rx || Math.floor(q.y / 9) !== ry) continue;
-    const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.14), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
-    star.position.set(q.x, 0.7, q.y);
-    objGroup.add(star);
+
+  // Pooled Projectile Meshes
+  const activeProjs = game.projectiles.filter(q => Math.floor(q.x / 9) === rx && Math.floor(q.y / 9) === ry);
+  while (projectilePool.length < activeProjs.length) {
+    const pm = new THREE.Mesh(sharedStarGeo, sharedStarMat);
+    projectilePool.push(pm);
+    objGroup.add(pm);
+  }
+  for (let i = 0; i < projectilePool.length; i++) {
+    if (i < activeProjs.length) {
+      projectilePool[i].visible = true;
+      projectilePool[i].position.set(activeProjs[i].x, 0.7, activeProjs[i].y);
+    } else {
+      projectilePool[i].visible = false;
+    }
   }
 
   const nearShrine = game.map.objects.find(o => o.type === 'shrine' && dist(o, p) < 2.2);
@@ -920,7 +952,20 @@ function drawC64PixelHUD(p, eRatio, nearObj, now) {
 
 score.setMode('title', 5);
 unlockAudio();
-requestAnimationFrame(animate);
+buildRoom(Math.floor(game.player.x / 9), Math.floor(game.player.y / 9));
+lastRoomKey = `${Math.floor(game.player.x / 9)},${Math.floor(game.player.y / 9)}`;
+rafId = requestAnimationFrame(animate);
+
+// Instant teardown on page close / reload so tab never hooks or hangs!
+function cleanupPage() {
+  if (isDisposed) return;
+  isDisposed = true;
+  if (rafId) cancelAnimationFrame(rafId);
+  score.stop();
+  try { renderer.dispose(); } catch {}
+}
+window.addEventListener('pagehide', cleanupPage);
+window.addEventListener('beforeunload', cleanupPage);
 
 window.addEventListener('resize', () => {
   const asp = viewport.clientWidth / viewport.clientHeight;

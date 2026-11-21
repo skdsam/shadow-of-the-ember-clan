@@ -138,7 +138,7 @@ function path(map,from,to){
  const M=map.size||SIZE,sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y);
  if(sx===tx&&sy===ty)return[{x:to.x,y:to.y}];
  const queue=[[sx,sy]],seen=new Set([sy*M+sx]),parent=new Map();let found=false;
- for(let n=0;n<queue.length;n++){
+ for(let n=0;n<queue.length&&n<220;n++){
   const [x,y]=queue[n];if(x===tx&&y===ty){found=true;break;}
   for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,key=ny*M+nx;
    if(nx<0||ny<0||nx>=M||ny>=M||seen.has(key)||!walkable(map,nx+.5,ny+.5))continue;
