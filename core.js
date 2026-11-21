@@ -31,6 +31,7 @@ function createMap(index){
   {id:'relic0',type:'relic',x:4.5,y:4.5},{id:'relic1',type:'relic',x:21.5,y:22.5},{id:'relic2',type:'relic',x:21.5,y:12.5},
   {id:'node0',type:'node',number:0,x:4.5,y:13.5},{id:'node1',type:'node',number:1,x:12.5,y:12.5},{id:'node2',type:'node',number:2,x:21.5,y:14.5},
   {id:'food0',type:'food',x:5.5,y:19.5},{id:'food1',type:'food',x:12.5,y:16.5},{id:'food2',type:'food',x:21.5,y:8.5},
+  {id:'stars0',type:'stars',x:4.5,y:18.5},{id:'stars1',type:'stars',x:12.5,y:22.5},{id:'stars2',type:'stars',x:13.5,y:4.5},
   {id:'altar',type:'altar',x:21.5,y:4.5}];
   const spawns=[
    {x:4.5,y:12.5,kind:'sword'},{x:6.5,y:4.5,kind:'archer'},
@@ -94,8 +95,8 @@ class Game{
  constructor(options={}){this.difficulty=options.difficulty||'normal';this.events=[];this.time=0;this.totalKills=0;this.deaths=0;this.lives=3;this.completed=false;this.loadLevel(0);}
  emit(type,data={}){this.events.push({type,...data});}
  loadLevel(index){
-  this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.puzzle=[];this.shrineCooldown=0;if(index===0||index===5)this.lives=3;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
-  this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:8,foodBag:0,angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
+  this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.starCaches=[];this.puzzle=[];this.shrineCooldown=0;if(index===0||index===5)this.lives=3;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
+  this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:index===5?0:8,foodBag:0,angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
   this.enemies=this.map.spawns.map((s,i)=>this.enemy(s,i));this.checkpoint=this.snapshot();this.emit('level',{index});
  }
  enemy(s,i){const boss=s.kind==='boss',hp=(boss?145+this.level*22:s.kind==='armour'?70:s.kind==='spear'?48:38)*(this.difficulty==='story'?.7:this.difficulty==='hard'?1.25:1);
@@ -113,14 +114,15 @@ class Game{
   if(walkable(this.map,e.x+dx,e.y)&&(!shrine||Math.hypot(e.x+dx-shrine.x,e.y-shrine.y)>=3.5))e.x+=dx;
   if(walkable(this.map,e.x,e.y+dy)&&(!shrine||Math.hypot(e.x-shrine.x,e.y+dy-shrine.y)>=3.5))e.y+=dy;
  }
- nearestObject(){return this.map.objects.filter(o=>!(o.type==='relic'&&this.relics.includes(+o.id.slice(-1)))&&!(o.type==='food'&&this.foods.includes(o.id))).map(o=>({o,d:dist(o,this.player)})).filter(v=>v.d<1.55).sort((a,b)=>a.d-b.d)[0]?.o;}
+ nearestObject(){return this.map.objects.filter(o=>!(o.type==='relic'&&this.relics.includes(+o.id.slice(-1)))&&!(o.type==='food'&&this.foods.includes(o.id))&&!(o.type==='stars'&&this.starCaches.includes(o.id))).map(o=>({o,d:dist(o,this.player)})).filter(v=>v.d<1.55).sort((a,b)=>a.d-b.d)[0]?.o;}
  interact(){
   if(this.dead)return;const o=this.nearestObject();if(!o){this.emit('message',{text:'Find a shrine, relic, or numbered stone. Press Tab for your map.'});return;}
   if(o.type==='food'){if(!this.foods.includes(o.id)){this.foods.push(o.id);this.player.foodBag=(this.player.foodBag||0)+1;this.emit('effect',{name:'relic'});this.emit('message',{text:`Stored fruit in bag (${this.player.foodBag}) · Press [H] to eat`});}return;}
+  if(o.type==='stars'){if(!this.starCaches.includes(o.id)){this.starCaches.push(o.id);this.player.stars=Math.min(15,this.player.stars+5);this.emit('effect',{name:'relic'});this.emit('message',{text:`Found Ninja Stars (+5) · ${this.player.stars} total [K]`});}return;}
   if(o.type==='guide'){this.emit('dialogue',{title:'Sora · shrine keeper',text:this.data.clue+' Recover the three ember relics, then challenge the guardian at the northern altar. Rest at the lantern shrine to save your journey.'});return;}
   if(o.type==='shrine'){
    if(this.shrineCooldown>0){const m=Math.floor(this.shrineCooldown/60),s=Math.ceil(this.shrineCooldown%60);this.emit('effect',{name:'error'});this.emit('message',{text:`The shrine rests · Pray again in ${m}:${String(s%60).padStart(2,'0')} (or next level)`});return;}
-   this.player.hp=100;this.player.stamina=100;this.player.stars=8;this.shrineCooldown=300;this.checkpoint=this.snapshot();this.emit('save');this.emit('message',{text:'You pray at the shrine · Full health restored (5:00 cooldown)'});this.emit('effect',{name:'save'});return;
+   this.player.hp=100;this.player.stamina=100;if(this.level!==5)this.player.stars=8;this.shrineCooldown=300;this.checkpoint=this.snapshot();this.emit('save');this.emit('message',{text:'You pray at the shrine · Full health restored (5:00 cooldown)'});this.emit('effect',{name:'save'});return;
   }
   if(o.type==='relic'){const n=+o.id.slice(-1);if(!this.relics.includes(n)){this.relics.push(n);this.emit('effect',{name:'relic'});this.emit('message',{text:`Ember relic recovered · ${this.relics.length} / 3`});}return;}
   if(o.type==='node'){

@@ -602,13 +602,15 @@ function animate(now) {
     if (Math.floor(o.x / 9) !== rx || Math.floor(o.y / 9) !== ry) continue;
     if (o.type === 'relic' && game.relics.includes(+o.id.slice(-1))) continue;
     if (o.type === 'food' && game.foods.includes(o.id)) continue;
+    if (o.type === 'stars' && game.starCaches.includes(o.id)) continue;
     const readyShrine = o.type === 'shrine' && game.shrineCooldown <= 0;
-    const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'shrine' ? (readyShrine ? '#60f0b0' : '#586898') : o.type === 'altar' ? '#d86050' : '#d8d8d8';
+    const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'shrine' ? (readyShrine ? '#60f0b0' : '#586898') : o.type === 'altar' ? '#d86050' : '#d8d8d8';
     const mesh = new THREE.Mesh(
-      o.type === 'relic' ? new THREE.OctahedronGeometry(0.22) : o.type === 'food' ? new THREE.SphereGeometry(0.18, 6, 5) : o.type === 'shrine' ? new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6) : new THREE.BoxGeometry(0.45, 0.55, 0.45),
+      o.type === 'relic' ? new THREE.OctahedronGeometry(0.22) : o.type === 'stars' ? new THREE.OctahedronGeometry(0.2) : o.type === 'food' ? new THREE.SphereGeometry(0.18, 6, 5) : o.type === 'shrine' ? new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6) : new THREE.BoxGeometry(0.45, 0.55, 0.45),
       new THREE.MeshLambertMaterial({ color: col })
     );
-    mesh.position.set(o.x, o.type === 'relic' || o.type === 'food' ? 0.35 + Math.sin(now * 0.004) * 0.06 : o.type === 'shrine' ? 0.43 : 0.28, o.y);
+    mesh.position.set(o.x, (o.type === 'relic' || o.type === 'food' || o.type === 'stars') ? 0.35 + Math.sin(now * 0.004) * 0.06 : o.type === 'shrine' ? 0.43 : 0.28, o.y);
+    if (o.type === 'stars') mesh.rotation.y = now * 0.004;
     mesh.castShadow = true;
     objGroup.add(mesh);
   }
@@ -639,7 +641,7 @@ function animate(now) {
   eatBtn.textContent = `🍎 FRUIT: ${p.foodBag || 0} [H]`;
   eatBtn.disabled = !(p.foodBag > 0);
   eatBtn.style.opacity = p.foodBag > 0 ? '1' : '0.45';
-  document.getElementById('weaponry-txt').textContent = `SHURIKEN × ${String(p.stars).padStart(2, '0')}`;
+  document.getElementById('weaponry-txt').textContent = p.stars > 0 ? `KATANA  ·  SHURIKEN × ${String(p.stars).padStart(2, '0')}` : 'SWORD ONLY (FIND ★)';
   const pips = document.querySelectorAll('#lives-row .life-pip');
   pips.forEach((pip, idx) => pip.classList.toggle('lost', idx >= game.lives));
 

@@ -54,6 +54,7 @@ class Renderer{
  object(o,g,time){const c=this.c,s=this.project(o.x,o.y),col=g.data.accent;
   if(o.type==='guide'){drawSprite(c,'guide',s.x,s.y,Math.PI/2,'idle',0,0,0);this.text('SORA',s.x,s.y-56,'#c9ceb0',8,'center');return;}
   if(o.type==='food'){if(g.foods?.includes(o.id))return;const yy=s.y-10;c.fillStyle='#e83838';c.fillRect(s.x-4,yy-4,8,7);c.fillStyle='#68f888';c.fillRect(s.x,yy-7,3,3);return;}
+  if(o.type==='stars'){if(g.starCaches?.includes(o.id))return;const yy=s.y-10;line(c,s.x-5,yy,s.x+5,yy,'#e0f0ff',2);line(c,s.x,yy-5,s.x,yy+5,'#e0f0ff',2);return;}
   if(o.type==='relic'){
    if(g.relics.includes(+o.id.slice(-1)))return;const yy=s.y-16+(this.reduced?0:Math.sin(time*3)*2);this.glow(s.x,yy,'#ffc778',28);poly(c,[[s.x,yy-9],[s.x+5,yy],[s.x,yy+9],[s.x-5,yy]],'#f9cf7e');poly(c,[[s.x,yy-7],[s.x+3,yy],[s.x,yy+5]],'#fff1bc');line(c,s.x-9,s.y,s.x+9,s.y,'#dcb77e');return;
   }
