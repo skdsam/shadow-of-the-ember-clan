@@ -17,17 +17,18 @@
   .intro-overlay[hidden]{display:none}
   .intro-overlay img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.88}
   .intro-shade{position:absolute;inset:0;background:linear-gradient(0deg,#061018f5 10%,#06101866 55%,transparent)}
-  .intro-content{position:relative;z-index:2;max-width:460px}
-  .intro-content h2{margin:0 0 6px;color:#f0d6a6;font-size:20px;letter-spacing:2px}
-  .intro-content p{margin:0 0 14px;color:#d6e2df;font-size:12px;line-height:1.5}
-  .intro-content button{background:#e2b579;color:#18202c;border:2px solid #ffe1aa;padding:8px 18px;font:inherit;font-size:13px;font-weight:bold;cursor:pointer}
-  .intro-content button:hover{background:#f5ca92}
-  #viewport canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .intro-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
+  #intro-canvas{display:block;width:540px;max-width:94%;height:auto;image-rendering:pixelated;margin-bottom:10px}
+  #intro-btn{background:#000000;color:#ffffff;border:3px solid #ffffff;padding:6px 14px;cursor:pointer;display:block}
+  #intro-btn:hover{background:#282828;border-color:#e85050}
+  #btn-canvas{display:block;width:210px;height:22px;image-rendering:pixelated;pointer-events:none}
+  #viewport canvas.webgl{display:block;width:100%;height:100%;image-rendering:pixelated}
   .hud-right{background:#000;border-bottom:3px solid #ffffff;position:relative}
   #side-canvas{display:block;width:100%;height:100%;image-rendering:pixelated;cursor:pointer}
   .hud-bottom{grid-column:1 / -1;background:#000;position:relative}
   #bottom-canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
-  .status-line{position:absolute;bottom:8px;left:10px;right:10px;background:#000c;color:#ffffff;padding:5px 10px;font-size:12px;pointer-events:none;border:2px solid #ffffff}
+  #msg-canvas{position:absolute;bottom:8px;left:10px;right:10px;width:calc(100% - 20px);height:30px;image-rendering:pixelated;pointer-events:none;border:2px solid #ffffff;background:#000d}
+  #hud-msg{display:none}
   @media(max-width:760px){.c64-grid{grid-template-columns:1fr;grid-template-rows:340px auto auto}.hud-bottom{grid-template-columns:1fr}}
  </style>
 </head>
@@ -43,15 +44,15 @@
    <div class="c64-grid">
    <div id="viewport">
     <div id="intro-overlay" class="intro-overlay">
-     <img id="intro-img" src="concepts/01-loading-screen.png" alt="The Last Ninja Loading Screen">
+     <img id="intro-img" src="concepts/01-loading-screen.png" alt="Shadows of the Ember Clan Loading Screen">
      <div class="intro-shade"></div>
      <div class="intro-content">
-      <h2 id="intro-title">SHADOW OF THE EMBER CLAN · 3D</h2>
-      <p id="intro-copy">Five seals bind the mountain. Walk the stone path, recover the three relics, and defeat the Shadow Shogun.</p>
-      <button id="intro-btn">Begin the Journey ↵</button>
+      <canvas id="intro-canvas" width="270" height="44"></canvas>
+      <button id="intro-btn"><canvas id="btn-canvas" width="140" height="15"></canvas></button>
      </div>
     </div>
-    <div id="hud-msg" class="status-line">WASD/Arrows move on path · J Katana · K Shuriken · Space Somersault · E Interact</div>
+    <canvas id="msg-canvas" width="320" height="13"></canvas>
+    <div id="hud-msg">WASD MOVE . J ATTACK . K STAR . Q WEAPON . SPACE ROLL . E USE</div>
    </div>
    <div class="hud-right">
     <canvas id="side-canvas" width="88" height="156" title="Click HOLDING or press [H] to eat stored apple"></canvas>

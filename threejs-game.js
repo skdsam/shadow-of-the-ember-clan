@@ -20,8 +20,6 @@ let gamePhase = 'title'; // 'title' -> 'prologue' -> 'playing'
 
 const introOverlay = document.getElementById('intro-overlay');
 const introImg = document.getElementById('intro-img');
-const introTitle = document.getElementById('intro-title');
-const introCopy = document.getElementById('intro-copy');
 const introBtn = document.getElementById('intro-btn');
 
 function advanceIntro() {
@@ -30,9 +28,6 @@ function advanceIntro() {
     gamePhase = 'prologue';
     score.setMode('intro', 5);
     introImg.src = 'concepts/03-cinematic-intro.png';
-    introTitle.textContent = 'PROLOGUE · THE WASTELANDS';
-    introCopy.textContent = 'Akuro has stolen the sacred seals. Stay on the stone path, leap past his guards with Space, and reclaim the Wastelands.';
-    introBtn.textContent = 'Enter the Wastelands ↵';
   } else if (gamePhase === 'prologue') {
     gamePhase = 'playing';
     introOverlay.hidden = true;
@@ -57,6 +52,7 @@ const camera = new THREE.OrthographicCamera(
 // Render at crisp C64-inspired internal pixel resolution (360x225) scaled pixelated!
 const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setSize(360, 225, false);
+renderer.domElement.className = 'webgl';
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.BasicShadowMap; // Crisp pixelated shadow edges
 viewport.prepend(renderer.domElement);
@@ -675,12 +671,14 @@ const BITMAP_FONT = {
   'G': ['01111','11000','11011','11011','01111'],
   'H': ['11011','11011','11111','11011','11011'],
   'I': ['01110','00100','00100','00100','01110'],
+  'J': ['00011','00011','00011','11011','01110'],
   'K': ['11011','11110','11100','11110','11011'],
   'L': ['11000','11000','11000','11000','11111'],
   'M': ['11011','11111','11111','11011','11011'],
   'N': ['11011','11111','11111','11111','11011'],
   'O': ['01110','11011','11011','11011','01110'],
   'P': ['11110','11011','11110','11000','11000'],
+  'Q': ['01110','11011','11011','01110','00011'],
   'R': ['11110','11011','11110','11110','11011'],
   'S': ['01111','11000','01110','00011','11110'],
   'T': ['11111','00100','00100','00100','00100'],
@@ -689,6 +687,7 @@ const BITMAP_FONT = {
   'W': ['11011','11011','11111','11111','10001'],
   'X': ['11011','01110','00100','01110','11011'],
   'Y': ['11011','11011','01110','00100','00100'],
+  'Z': ['11111','00011','00110','11000','11111'],
   '0': ['01110','11011','11011','11011','01110'],
   '1': ['00100','01100','00100','00100','01110'],
   '2': ['11110','00011','01110','11000','11111'],
@@ -700,6 +699,16 @@ const BITMAP_FONT = {
   '8': ['01110','11011','01110','11011','01110'],
   '9': ['01110','11011','01111','00011','11110'],
   '.': ['00000','00000','00100','00000','00000'],
+  ':': ['00000','00100','00000','00100','00000'],
+  '-': ['00000','00000','01110','00000','00000'],
+  '+': ['00000','00100','01110','00100','00000'],
+  '/': ['00001','00010','00100','01000','10000'],
+  '!': ['00100','00100','00100','00000','00100'],
+  '%': ['11001','00010','00100','01000','10011'],
+  '[': ['01110','01000','01000','01000','01110'],
+  ']': ['01110','00010','00010','00010','01110'],
+  '(': ['00110','01000','01000','01000','00110'],
+  ')': ['01100','00010','00010','00010','01100'],
   ' ': ['00000','00000','00000','00000','00000']
 };
 
@@ -879,6 +888,34 @@ function drawC64PixelHUD(p, eRatio, nearObj, now) {
   drawPixelText(botCtx, 'OF THE', 274, 14, '#c82020', 1, true);
   drawPixelText(botCtx, 'EMBER', 274, 23, '#e83030', 2, true);
   drawPixelText(botCtx, 'CLAN', 274, 35, '#e83030', 2, true);
+
+  // 5. Pixel-Art Title Overlay & Bottom Viewport Controls Banner (#intro-canvas, #btn-canvas, #msg-canvas)
+  const introCv = document.getElementById('intro-canvas');
+  const btnCv = document.getElementById('btn-canvas');
+  const msgCv = document.getElementById('msg-canvas');
+  if (introCv && gamePhase !== 'playing') {
+    const ic = introCv.getContext('2d'); ic.imageSmoothingEnabled = false;
+    ic.clearRect(0, 0, 270, 44);
+    ic.fillStyle = '#000000bb'; ic.fillRect(0, 0, 270, 44);
+    if (gamePhase === 'title') {
+      drawPixelText(ic, '. FIVE SEALS . ONE ROAD TO DAWN .', 135, 6, '#f0d060', 1);
+      drawPixelText(ic, 'WASD MOVE . J ATTACK . K STAR . Q WEAPON', 135, 19, '#ffffff', 1);
+      drawPixelText(ic, 'SPACE ROLL . E INTERACT . H EAT APPLE', 135, 31, '#88e0a0', 1);
+    } else {
+      drawPixelText(ic, '. PROLOGUE : THE WASTELANDS .', 135, 6, '#e85050', 1);
+      drawPixelText(ic, 'FIND IRON KEY AND DRAGON NAILS', 135, 19, '#ffffff', 1);
+      drawPixelText(ic, 'RECOVER 3 RELICS . DEFEAT THE SHOGUN', 135, 31, '#f0d060', 1);
+    }
+    const bc = btnCv.getContext('2d'); bc.imageSmoothingEnabled = false;
+    bc.fillStyle = '#000000'; bc.fillRect(0, 0, 140, 15);
+    drawPixelText(bc, gamePhase === 'title' ? '. BEGIN JOURNEY .' : '. ENTER WASTELANDS .', 70, 5, '#f0d060', 1);
+  }
+  if (msgCv) {
+    const mc = msgCv.getContext('2d'); mc.imageSmoothingEnabled = false;
+    mc.fillStyle = '#000000'; mc.fillRect(0, 0, 320, 13);
+    const rawMsg = (document.getElementById('hud-msg').textContent || '').replace(/[·]/g, '.').toUpperCase();
+    drawPixelText(mc, rawMsg.slice(0, 52), 160, 4, '#ffffff', 1);
+  }
 }
 
 score.setMode('title', 5);
