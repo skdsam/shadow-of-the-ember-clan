@@ -10,9 +10,9 @@
   .topbar{display:flex;justify-content:flex-end;align-items:center;padding:0 4px 12px;font-size:12px}
   .topbar a,.topbar button{color:#e0e0e0;background:#1a2028;border:1px solid #58626b;padding:7px 12px;text-decoration:none;cursor:pointer;font:inherit;font-size:11px}
   .topbar button:hover,.topbar a:hover{background:#2d3642;border-color:#88e0a0}
-  .frame{width:100%;aspect-ratio:8/5;background:#000;border:4px solid #9a9a9a;box-shadow:0 0 0 2px #505050,0 18px 60px #000b;display:flex}
-  .c64-grid{flex:1;display:grid;grid-template-columns:1fr 260px;grid-template-rows:1fr 136px;background:#000}
-  #viewport{position:relative;overflow:hidden;background:#8ee6a2;border-right:4px solid #9a9a9a;border-bottom:4px solid #9a9a9a}
+  .frame{width:100%;aspect-ratio:8/5;background:#000;border:3px solid #ffffff;box-shadow:0 18px 60px #000b;display:flex}
+  .c64-grid{flex:1;display:grid;grid-template-columns:1fr 264px;grid-template-rows:1fr 142px;background:#000}
+  #viewport{position:relative;overflow:hidden;background:#18dc6c;border-right:3px solid #ffffff;border-bottom:3px solid #ffffff}
   .intro-overlay{position:absolute;inset:0;z-index:10;background:#07121c;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:20px;text-align:center}
   .intro-overlay[hidden]{display:none}
   .intro-overlay img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.88}
@@ -23,26 +23,11 @@
   .intro-content button{background:#e2b579;color:#18202c;border:2px solid #ffe1aa;padding:8px 18px;font:inherit;font-size:13px;font-weight:bold;cursor:pointer}
   .intro-content button:hover{background:#f5ca92}
   #viewport canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
-  .hud-right{display:flex;flex-direction:column;border-bottom:4px solid #9a9a9a}
-  .hud-box{padding:12px;border-bottom:4px solid #9a9a9a;text-align:center}
-  .hud-box:last-child{border-bottom:0;flex:1}
-  .hud-title{font-size:13px;letter-spacing:1px;color:#d8d8d8;margin-bottom:8px}
-  .bar-wrap{height:14px;background:#1c1c1c;border:2px solid #88e0a0;margin:6px 0 12px}
-  .bar-enemy{height:100%;background:#8c78d8;width:100%;transition:width .08s}
-  .bar-wounds{height:100%;background:#d86050;width:100%;transition:width .08s}
-  .bar-power{height:100%;background:linear-gradient(90deg,#e06048,#f0c050,#88e0a0);width:100%;transition:width .06s}
-  .hud-bottom{grid-column:1 / -1;display:grid;grid-template-columns:150px 140px 1fr 240px;align-items:center;padding:8px 18px;gap:12px}
-  .lives-row{display:flex;justify-content:center;gap:14px;height:36px;align-items:center;margin-bottom:8px}
-  .life-pip{position:relative;width:16px;height:14px;background:#d82828;border-radius:4px 4px 6px 6px;box-shadow:inset 3px 3px 0 #ff7878,inset -3px -3px 0 #801010,0 0 0 2px #000}
-  .life-pip::before{content:"";position:absolute;top:-6px;left:6px;width:4px;height:5px;background:#683818;box-shadow:3px -1px 0 #38d058,5px 0 0 #38d058}
-  .life-pip.lost{background:#181818;box-shadow:none}
-  .life-pip.lost::before{display:none}
-  #power-canvas{display:block;margin:0 auto 4px;width:112px;height:58px;image-rendering:pixelated;background:#000000}
-  .logo-c64{text-align:center;line-height:1.1}
-  .logo-c64 .t1{color:#8878d8;font-size:13px;letter-spacing:2px;font-weight:bold}
-  .logo-c64 .t2{color:#808080;font-size:11px;font-weight:bold;letter-spacing:2px;margin:2px 0}
-  .logo-c64 .t3{color:#8878d8;font-size:19px;font-weight:bold;letter-spacing:1.5px}
-  .status-line{position:absolute;bottom:8px;left:10px;right:10px;background:#000b;color:#f0d8a8;padding:6px 10px;font-size:12px;pointer-events:none;border:1px solid #787878}
+  .hud-right{background:#000;border-bottom:3px solid #ffffff;position:relative}
+  #side-canvas{display:block;width:100%;height:100%;image-rendering:pixelated;cursor:pointer}
+  .hud-bottom{grid-column:1 / -1;background:#000;position:relative}
+  #bottom-canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .status-line{position:absolute;bottom:8px;left:10px;right:10px;background:#000c;color:#ffffff;padding:5px 10px;font-size:12px;pointer-events:none;border:2px solid #ffffff}
   @media(max-width:760px){.c64-grid{grid-template-columns:1fr;grid-template-rows:340px auto auto}.hud-bottom{grid-template-columns:1fr}}
  </style>
 </head>
@@ -69,39 +54,10 @@
     <div id="hud-msg" class="status-line">WASD/Arrows move on path · J Katana · K Shuriken · Space Somersault · E Interact</div>
    </div>
    <div class="hud-right">
-    <div class="hud-box">
-     <div class="hud-title">· ENEMY ·</div>
-     <div class="bar-wrap"><div id="enemy-bar" class="bar-enemy"></div></div>
-     <div class="hud-title">· WOUNDS ·</div>
-     <div class="bar-wrap" style="border-color:#9a9a9a;height:12px"><div id="wounds-bar" class="bar-wounds"></div></div>
-    </div>
-    <div class="hud-box">
-     <div class="hud-title">· COLLECT ·</div>
-     <canvas id="collect-canvas" width="120" height="44" style="display:block;margin:4px auto 12px;image-rendering:pixelated"></canvas>
-     <div class="hud-title">· HOLDING ·</div>
-     <canvas id="holding-canvas" width="180" height="64" style="display:block;margin:6px auto;image-rendering:pixelated"></canvas>
-     <button id="eat-btn" disabled style="margin-top:8px;width:100%;padding:5px 4px;background:#1a2420;color:#e86060;border:1px solid #607068;font:inherit;font-size:10px;cursor:pointer">EAT APPLE [H] (0)</button>
-    </div>
+    <canvas id="side-canvas" width="88" height="156" title="Click HOLDING or press [H] to eat stored apple"></canvas>
    </div>
    <div class="hud-bottom">
-    <div style="text-align:center">
-     <canvas id="power-canvas" width="112" height="58"></canvas>
-     <div class="hud-title" style="margin:0">· POWER ·</div>
-    </div>
-    <div style="text-align:center">
-     <div id="lives-row" class="lives-row"><span class="life-pip"></span><span class="life-pip"></span><span class="life-pip"></span></div>
-     <div class="hud-title" style="margin:0">· LIVES ·</div>
-    </div>
-    <div style="text-align:center">
-     <canvas id="weaponry-canvas" width="220" height="48" style="display:block;margin:0 auto 4px;image-rendering:pixelated"></canvas>
-     <div id="hit-badge" style="height:14px;font-size:10px;color:#f0d060;letter-spacing:2px"></div>
-     <div class="hud-title" style="margin:0">· WEAPONRY ·</div>
-    </div>
-    <div class="logo-c64">
-     <div class="t1">SHADOWS</div>
-     <div class="t2">OF THE</div>
-     <div class="t3">EMBER CLAN</div>
-    </div>
+    <canvas id="bottom-canvas" width="320" height="46"></canvas>
    </div>
   </div>
  </div>

@@ -465,7 +465,7 @@ function toggleMute() {
 
 document.getElementById('track-btn').onclick = cycleTrack;
 document.getElementById('mute-btn').onclick = toggleMute;
-document.getElementById('eat-btn').onclick = () => { unlockAudio(); game.eatFood(); };
+document.getElementById('side-canvas').onclick = () => { unlockAudio(); game.eatFood(); };
 
 let lastTime = performance.now();
 function animate(now) {
@@ -482,7 +482,6 @@ function animate(now) {
     if (ev.type === 'message') document.getElementById('hud-msg').textContent = ev.text;
     else if (ev.type === 'impact') {
       spawnHitSparks(ev.x, ev.y, ev.color || '#f0d060');
-      document.getElementById('hit-badge').textContent = '★ HIT! ★';
       hitBannerUntil = now + 450;
       combatUntil = now + 5000;
     } else if (ev.type === 'effect') {
@@ -495,8 +494,6 @@ function animate(now) {
       setTimeout(() => { game.retry(); combatUntil = 0; score.paused = false; score.apply(); }, 2600);
     }
   }
-  if (now > hitBannerUntil) document.getElementById('hit-badge').textContent = '';
-
   // Update 3D hit-marker particles
   for (let i = particles.length - 1; i >= 0; i--) {
     const pt = particles[i];
@@ -635,130 +632,230 @@ function animate(now) {
     }
   }
   const activeEnemy = game.enemies.find(e => e.hp > 0 && dist(e, p) < 7);
-  document.getElementById('enemy-bar').style.width = (activeEnemy ? (activeEnemy.hp / activeEnemy.maxHp) * 100 : 100) + '%';
-  document.getElementById('wounds-bar').style.width = Math.max(0, p.hp) + '%';
-  drawPixelPanels(p, game.nearestObject());
-  const eatBtn = document.getElementById('eat-btn');
-  eatBtn.textContent = `EAT APPLE [H] (${p.foodBag || 0})`;
-  eatBtn.disabled = !(p.foodBag > 0);
-  eatBtn.style.opacity = p.foodBag > 0 ? '1' : '0.45';
-  const pips = document.querySelectorAll('#lives-row .life-pip');
-  pips.forEach((pip, idx) => pip.classList.toggle('lost', idx >= game.lives));
+  const eRatio = activeEnemy ? Math.max(0, activeEnemy.hp / activeEnemy.maxHp) : 1;
+  drawC64PixelHUD(p, eRatio, game.nearestObject(), now);
 
   renderer.render(scene, camera);
 }
 
-// Build pixel-accurate twin spiral snake paths from inner core -> outer rim
-const powerCanvas = document.getElementById('power-canvas');
-const powerCtx = powerCanvas.getContext('2d');
-powerCtx.imageSmoothingEnabled = false;
+// 100% Pixel-Art C64/EGA Side & Bottom HUD Renderer (Chunky Bitmap Font + Pixel Sprites)
+const sideCanvas = document.getElementById('side-canvas');
+const sideCtx = sideCanvas.getContext('2d');
+const botCanvas = document.getElementById('bottom-canvas');
+const botCtx = botCanvas.getContext('2d');
+sideCtx.imageSmoothingEnabled = false;
+botCtx.imageSmoothingEnabled = false;
+
+// 5x5 / 6x5 Chunky C64 Bitmap Font Glyphs
+const BITMAP_FONT = {
+  'A': ['01110','11011','11111','11011','11011'],
+  'B': ['11110','11011','11110','11011','11110'],
+  'C': ['01111','11000','11000','11000','01111'],
+  'D': ['11110','11011','11011','11011','11110'],
+  'E': ['11111','11000','11110','11000','11111'],
+  'F': ['11111','11000','11110','11000','11000'],
+  'G': ['01111','11000','11011','11011','01111'],
+  'H': ['11011','11011','11111','11011','11011'],
+  'I': ['01110','00100','00100','00100','01110'],
+  'K': ['11011','11110','11100','11110','11011'],
+  'L': ['11000','11000','11000','11000','11111'],
+  'M': ['11011','11111','11111','11011','11011'],
+  'N': ['11011','11111','11111','11111','11011'],
+  'O': ['01110','11011','11011','11011','01110'],
+  'P': ['11110','11011','11110','11000','11000'],
+  'R': ['11110','11011','11110','11110','11011'],
+  'S': ['01111','11000','01110','00011','11110'],
+  'T': ['11111','00100','00100','00100','00100'],
+  'U': ['11011','11011','11011','11011','01110'],
+  'V': ['11011','11011','11011','01110','00100'],
+  'W': ['11011','11011','11111','11111','10001'],
+  'X': ['11011','01110','00100','01110','11011'],
+  'Y': ['11011','11011','01110','00100','00100'],
+  '0': ['01110','11011','11011','11011','01110'],
+  '1': ['00100','01100','00100','00100','01110'],
+  '2': ['11110','00011','01110','11000','11111'],
+  '3': ['11110','00011','01110','00011','11110'],
+  '4': ['11011','11011','11111','00011','00011'],
+  '5': ['11111','11000','11110','00011','11110'],
+  '6': ['01111','11000','11110','11011','01110'],
+  '7': ['11111','00011','00110','01100','01100'],
+  '8': ['01110','11011','01110','11011','01110'],
+  '9': ['01110','11011','01111','00011','11110'],
+  '.': ['00000','00000','00100','00000','00000'],
+  ' ': ['00000','00000','00000','00000','00000']
+};
+
+function drawPixelText(ctx, str, cx, y, col = '#ffffff', scale = 1, dither = false) {
+  const charW = 6 * scale;
+  const totalW = str.length * charW - scale;
+  let startX = Math.round(cx - totalW / 2);
+  for (let c = 0; c < str.length; c++) {
+    const g = BITMAP_FONT[str[c].toUpperCase()] || BITMAP_FONT[' '];
+    for (let ry = 0; ry < 5; ry++) {
+      for (let rx = 0; rx < 5; rx++) {
+        if (g[ry][rx] === '1') {
+          if (dither) {
+            ctx.fillStyle = ry < 2 ? '#f03030' : ry < 4 ? ((rx + ry) % 2 === 0 ? '#d82020' : '#780808') : '#881010';
+          } else {
+            ctx.fillStyle = col;
+          }
+          ctx.fillRect(startX + rx * scale, y + ry * scale, scale, scale);
+        }
+      }
+    }
+    startX += charW;
+  }
+}
 
 function buildSpiralPoints(cx, cy, mirrorX) {
-  // Exact Last Ninja spiral winding outward from inner eye -> outer stem
   const pts = [];
-  const step = 1;
   const segments = [
-    [0, 0, 8 * mirrorX, 0],
-    [8 * mirrorX, 0, 8 * mirrorX, -8],
-    [8 * mirrorX, -8, -12 * mirrorX, -8],
-    [-12 * mirrorX, -8, -12 * mirrorX, 10],
-    [-12 * mirrorX, 10, 16 * mirrorX, 10],
-    [16 * mirrorX, 10, 16 * mirrorX, -18],
-    [16 * mirrorX, -18, -20 * mirrorX, -18],
-    [-20 * mirrorX, -18, -20 * mirrorX, 20],
-    [-20 * mirrorX, 20, -2 * mirrorX, 20],
-    [-2 * mirrorX, 20, -2 * mirrorX, 24]
+    [0, 0, 5 * mirrorX, 0],
+    [5 * mirrorX, 0, 5 * mirrorX, -5],
+    [5 * mirrorX, -5, -8 * mirrorX, -5],
+    [-8 * mirrorX, -5, -8 * mirrorX, 7],
+    [-8 * mirrorX, 7, 11 * mirrorX, 7],
+    [11 * mirrorX, 7, 11 * mirrorX, -11],
+    [11 * mirrorX, -11, -14 * mirrorX, -11],
+    [-14 * mirrorX, -11, -14 * mirrorX, 13],
+    [-14 * mirrorX, 13, -1 * mirrorX, 13],
+    [-1 * mirrorX, 13, -1 * mirrorX, 16]
   ];
   for (const [x1, y1, x2, y2] of segments) {
     const dx = Math.sign(x2 - x1), dy = Math.sign(y2 - y1);
-    const count = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) / step;
+    const count = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
     for (let i = 0; i <= count; i++) {
-      pts.push([cx + x1 + dx * i * step, cy + y1 + dy * i * step]);
+      pts.push([cx + x1 + dx * i, cy + y1 + dy * i]);
     }
   }
   return pts;
 }
 
-const leftSnake = buildSpiralPoints(34, 29, -1);
-const rightSnake = buildSpiralPoints(78, 29, 1);
+const leftSnake = buildSpiralPoints(21, 16, -1);
+const rightSnake = buildSpiralPoints(47, 16, 1);
 
-function drawPowerSnakes(ratio) {
-  powerCtx.fillStyle = '#000000';
-  powerCtx.fillRect(0, 0, 112, 58);
-  // 100% -> 50%: right spiral retracts into black; 50% -> 0%: left spiral retracts into black
-  const leftRatio = Math.max(0, Math.min(1, ratio * 2));
-  const rightRatio = Math.max(0, Math.min(1, (ratio - 0.5) * 2));
-  const drawOne = (pts, r) => {
+function drawPixelKatana(ctx, ox, oy) {
+  const px = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(ox + x, oy + y, w, h); };
+  // Pointed blade tip + 3-shade steel blade
+  px(0, 4, 2, 1, '#ffffff');
+  px(2, 3, 38, 1, '#ffffff');
+  px(1, 4, 39, 1, '#b0b0b0');
+  px(3, 5, 37, 1, '#585858');
+  // Curved S-guard (tsuba) matching screenshot
+  px(40, 1, 2, 7, '#d8d8d8');
+  px(39, 0, 2, 2, '#ffffff');
+  px(41, 7, 2, 2, '#909090');
+  // Striped wrapped hilt
+  px(42, 3, 11, 3, '#585858');
+  for (let hx = 43; hx <= 51; hx += 2) px(hx, 3, 1, 2, '#e0e0e0');
+}
+
+function drawPixelIcon(ctx, kind, ox, oy) {
+  const px = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(ox + x, oy + y, w, h); };
+  if (kind === 'stars') {
+    px(5, 0, 2, 12, '#d8e8ff'); px(0, 5, 12, 2, '#d8e8ff');
+    px(2, 2, 8, 8, '#98b0d0'); px(5, 5, 2, 2, '#000000');
+  } else if (kind === 'claws') {
+    // Nunchaku / Dragon Nails in gold & chain
+    px(4, 1, 3, 2, '#ffffff'); px(7, 0, 3, 2, '#b0b0b0'); px(10, 1, 3, 2, '#ffffff');
+    px(1, 3, 3, 11, '#e8a828'); px(2, 3, 1, 11, '#ffd868');
+    px(12, 3, 3, 11, '#e8a828'); px(13, 3, 1, 11, '#ffd868');
+  } else if (kind === 'key') {
+    px(0, 3, 6, 6, '#f0d050'); px(2, 5, 2, 2, '#000000');
+    px(6, 5, 10, 2, '#f0d050'); px(13, 7, 2, 3, '#f0d050'); px(10, 7, 2, 2, '#f0d050');
+  } else if (kind === 'food') {
+    // Pixel cherry/apple matching screenshot
+    px(1, 3, 6, 5, '#e02020'); px(2, 2, 4, 7, '#e02020');
+    px(2, 3, 2, 2, '#ff9898'); px(5, 6, 2, 2, '#780808');
+    px(4, 0, 2, 2, '#68d848');
+  } else if (kind === 'relic') {
+    px(4, 0, 4, 12, '#f0c040'); px(0, 4, 12, 4, '#f0c040'); px(4, 4, 4, 4, '#ffffff');
+  }
+}
+
+function drawC64PixelHUD(p, eRatio, nearObj, now) {
+  // === RIGHT SIDEBAR (88 x 156 internal pixel grid) ===
+  sideCtx.fillStyle = '#000000';
+  sideCtx.fillRect(0, 0, 88, 156);
+  // White horizontal divider between ENEMY/WOUNDS and USING/HOLDING
+  sideCtx.fillStyle = '#ffffff';
+  sideCtx.fillRect(0, 56, 88, 2);
+
+  // Top box: . ENEMY . -> Purple bar inside white frame -> . WOUNDS .
+  drawPixelText(sideCtx, '. ENEMY .', 44, 8, '#ffffff', 1);
+  sideCtx.fillStyle = '#ffffff';
+  sideCtx.fillRect(6, 21, 76, 13);
+  sideCtx.fillStyle = '#000000';
+  sideCtx.fillRect(8, 23, 72, 9);
+  sideCtx.fillStyle = '#5868f0';
+  sideCtx.fillRect(8, 23, Math.round(72 * eRatio), 9);
+  drawPixelText(sideCtx, '. WOUNDS .', 44, 42, '#ffffff', 1);
+
+  // Lower box: . USING . -> Pixel Katana -> . HOLDING . -> Held items
+  drawPixelText(sideCtx, nearObj ? '. COLLECT .' : '. USING .', 44, 66, '#ffffff', 1);
+  if (nearObj && ['food', 'stars', 'key', 'claws', 'relic'].includes(nearObj.type)) {
+    drawPixelIcon(sideCtx, nearObj.type, 38, 79);
+  } else {
+    drawPixelKatana(sideCtx, 17, 81);
+  }
+
+  drawPixelText(sideCtx, '. HOLDING .', 44, 104, '#ffffff', 1);
+  let hx = 10;
+  if (game.inventory.includes('key')) { drawPixelIcon(sideCtx, 'key', hx, 118); hx += 19; }
+  if (game.inventory.includes('claws')) { drawPixelIcon(sideCtx, 'claws', hx, 118); hx += 19; }
+  for (let i = 0; i < (p.foodBag || 0); i++) { drawPixelIcon(sideCtx, 'food', hx + i * 11, 119); }
+  for (let i = 0; i < game.relics.length; i++) { drawPixelIcon(sideCtx, 'relic', 14 + i * 22, 136); }
+  if (p.foodBag > 0) {
+    drawPixelText(sideCtx, 'PRESS H', 64, 139, '#e85050', 1);
+  }
+
+  // === BOTTOM BAR (320 x 46 internal pixel grid) ===
+  botCtx.fillStyle = '#000000';
+  botCtx.fillRect(0, 0, 320, 46);
+
+  // 1. Retracting Snake Spiral (. POWER .)
+  const ratio = Math.max(0, Math.min(1, p.hp / 100));
+  const leftR = Math.max(0, Math.min(1, ratio * 2));
+  const rightR = Math.max(0, Math.min(1, (ratio - 0.5) * 2));
+  const drawSpiral = (pts, r) => {
     const activeCount = Math.round(pts.length * r);
     if (activeCount <= 0) return;
-    powerCtx.fillStyle = '#d87868';
-    for (let i = 0; i < activeCount; i++) {
-      const [x, y] = pts[i];
-      powerCtx.fillRect(x - 3, y - 3, 7, 7);
-    }
-    powerCtx.fillStyle = '#ffffff';
-    for (let i = 0; i < activeCount; i++) {
-      const [x, y] = pts[i];
-      powerCtx.fillRect(x - 1, y - 1, 3, 3);
-    }
+    botCtx.fillStyle = '#e85050';
+    for (let i = 0; i < activeCount; i++) botCtx.fillRect(pts[i][0] - 2, pts[i][1] - 2, 5, 5);
+    botCtx.fillStyle = '#ffffff';
+    for (let i = 0; i < activeCount; i++) botCtx.fillRect(pts[i][0] - 1, pts[i][1] - 1, 3, 3);
+    botCtx.fillStyle = '#000000';
+    for (let i = 2; i < activeCount; i += 4) botCtx.fillRect(pts[i][0], pts[i][1], 1, 1);
   };
-  drawOne(leftSnake, leftRatio);
-  drawOne(rightSnake, rightRatio);
-}
+  drawSpiral(leftSnake, leftR);
+  drawSpiral(rightSnake, rightR);
+  drawPixelText(botCtx, '. POWER .', 34, 37, '#ffffff', 1);
 
-// Pixel-Art C64 HUD Icon Renderers (COLLECT, HOLDING, WEAPONRY)
-const collectCtx = document.getElementById('collect-canvas').getContext('2d');
-const holdingCtx = document.getElementById('holding-canvas').getContext('2d');
-const weaponCtx = document.getElementById('weaponry-canvas').getContext('2d');
-[collectCtx, holdingCtx, weaponCtx].forEach(c => { c.imageSmoothingEnabled = false; });
-
-function drawHudIcon(ctx, kind, ox, oy) {
-  const px = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(ox + x, oy + y, w, h); };
-  if (kind === 'katana') {
-    px(2, 10, 44, 3, '#e0e0e0'); px(2, 11, 44, 1, '#ffffff'); // Steel blade
-    px(46, 6, 3, 11, '#c8c8c8'); // Crossguard
-    px(49, 9, 12, 5, '#b87830'); // Handle
-  } else if (kind === 'stars') {
-    px(8, 2, 4, 16, '#d8e8ff'); px(2, 8, 16, 4, '#d8e8ff'); px(8, 8, 4, 4, '#202020');
-  } else if (kind === 'claws') {
-    // Dragon Nails / Nunchaku-style gold claws
-    px(2, 4, 4, 14, '#d89828'); px(14, 4, 4, 14, '#d89828');
-    px(6, 4, 8, 3, '#c8c8c8'); px(6, 8, 8, 2, '#909090');
-  } else if (kind === 'key') {
-    px(2, 6, 8, 8, '#f0d050'); px(4, 8, 4, 4, '#000000');
-    px(10, 9, 12, 3, '#f0d050'); px(18, 12, 2, 4, '#f0d050'); px(14, 12, 2, 3, '#f0d050');
-  } else if (kind === 'food') {
-    px(4, 5, 10, 9, '#d82828'); px(6, 6, 3, 3, '#ff7878');
-    px(8, 2, 2, 3, '#683818'); px(10, 2, 4, 2, '#38d058');
-  } else if (kind === 'relic') {
-    px(7, 2, 6, 14, '#f0c050'); px(3, 6, 14, 6, '#f0c050'); px(7, 6, 6, 6, '#fff0a0');
+  // 2. Pixel Apple Lives (. LIVES .)
+  for (let i = 0; i < Math.max(0, game.lives); i++) {
+    drawPixelIcon(botCtx, 'food', 79 + i * 11, 22);
   }
-}
+  drawPixelText(botCtx, '. LIVES .', 94, 37, '#ffffff', 1);
 
-function drawPixelPanels(p, nearObj) {
-  // 1. COLLECT (nearest pickup item)
-  collectCtx.fillStyle = '#000000'; collectCtx.fillRect(0, 0, 120, 44);
-  if (nearObj && ['food', 'stars', 'key', 'claws', 'relic'].includes(nearObj.type)) {
-    drawHudIcon(collectCtx, nearObj.type, 46, 12);
-  }
-  // 2. HOLDING (Inventory: Key, Dragon Nails, Apples, Relics)
-  holdingCtx.fillStyle = '#000000'; holdingCtx.fillRect(0, 0, 180, 64);
-  let hx = 10;
-  if (game.inventory.includes('key')) { drawHudIcon(holdingCtx, 'key', hx, 8); hx += 34; }
-  if (game.inventory.includes('claws')) { drawHudIcon(holdingCtx, 'claws', hx, 8); hx += 32; }
-  for (let i = 0; i < (p.foodBag || 0); i++) { drawHudIcon(holdingCtx, 'food', hx + i * 22, 8); }
-  for (let i = 0; i < game.relics.length; i++) { drawHudIcon(holdingCtx, 'relic', 14 + i * 28, 36); }
-  // 3. WEAPONRY (Bottom center: Sword, Shuriken count, Dragon Nails)
-  weaponCtx.fillStyle = '#000000'; weaponCtx.fillRect(0, 0, 220, 48);
-  drawHudIcon(weaponCtx, 'katana', 18, 12);
+  // 3. Pixel Weaponry (. WEAPONRY .)
+  drawPixelKatana(botCtx, 146, 6);
   if (p.stars > 0) {
-    drawHudIcon(weaponCtx, 'stars', 102, 12);
-    weaponCtx.fillStyle = '#d8d8d8'; weaponCtx.font = 'bold 12px Courier New';
-    weaponCtx.fillText('x' + p.stars, 124, 24);
+    drawPixelIcon(botCtx, 'stars', 150, 19);
+    drawPixelText(botCtx, 'X' + p.stars, 173, 23, '#ffffff', 1);
   }
   if (game.inventory.includes('claws')) {
-    drawHudIcon(weaponCtx, 'claws', 166, 12);
+    drawPixelIcon(botCtx, 'claws', 192, 18);
   }
+  if (now < hitBannerUntil) {
+    drawPixelText(botCtx, 'HIT', 134, 21, '#f0d050', 1);
+  }
+  drawPixelText(botCtx, '. WEAPONRY .', 176, 37, '#ffffff', 1);
+
+  // 4. Dithered Crimson Pixel Title Logo (Right)
+  drawPixelText(botCtx, 'SHADOWS', 274, 5, '#e83030', 1, true);
+  drawPixelText(botCtx, 'OF THE', 274, 14, '#c82020', 1, true);
+  drawPixelText(botCtx, 'EMBER', 274, 23, '#e83030', 2, true);
+  drawPixelText(botCtx, 'CLAN', 274, 35, '#e83030', 2, true);
 }
 
 score.setMode('title', 5);
