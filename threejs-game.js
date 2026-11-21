@@ -631,7 +631,7 @@ function animate(now) {
     }
     const inRoom = Math.floor(e.x / 9) === rx && Math.floor(e.y / 9) === ry;
     const isDeadFlashing = e.hp <= 0 && e.timer > 0;
-    mesh.visible = inRoom && (e.hp > 0 || (isDeadFlashing && Math.floor(now / 70) % 2 === 0));
+    mesh.visible = inRoom && (e.hp > 0 || !isDeadFlashing || Math.floor(now / 70) % 2 === 0);
     mesh.position.set(e.x, 0, e.y);
     mesh.rotation.y = -e.angle + Math.PI / 2;
     if (e.hp <= 0) {
