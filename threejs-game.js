@@ -618,11 +618,16 @@ function animate(now) {
     if (o.type === 'key' && game.inventory.includes('key')) continue;
     if (o.type === 'claws' && game.inventory.includes('claws')) continue;
     const readyShrine = o.type === 'shrine' && game.shrineCooldown <= 0;
-    const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'key' ? '#e8c840' : o.type === 'claws' ? '#f0a030' : o.type === 'node' ? (game.puzzle.includes(o.number) ? '#60f0b0' : '#a8a8a8') : o.type === 'shrine' ? (readyShrine ? '#60f0b0' : '#586898') : o.type === 'altar' ? '#d86050' : '#d8d8d8';
-    // Render puzzle stones as flat recessed floor runes so no stone block sits on the road!
-    const geo = o.type === 'node' ? new THREE.CylinderGeometry(0.32, 0.34, 0.05, 8) : o.type === 'relic' || o.type === 'stars' ? new THREE.OctahedronGeometry(0.22) : o.type === 'food' ? new THREE.SphereGeometry(0.18, 6, 5) : o.type === 'key' || o.type === 'claws' ? new THREE.TorusGeometry(0.18, 0.06, 6, 8) : o.type === 'shrine' ? new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6) : new THREE.BoxGeometry(0.42, 0.5, 0.42);
+    if (o.type === 'guide') {
+      const sage = createCharacterMesh('#2e6b5e', '#d8c088', false, false);
+      sage.position.set(o.x, 0, o.y);
+      objGroup.add(sage);
+      continue;
+    }
+    const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'key' ? '#e8c840' : o.type === 'claws' ? '#f0a030' : o.type === 'node' ? (game.puzzle.includes(o.number) ? '#60f0b0' : '#a8a8a8') : o.type === 'shrine' ? (readyShrine ? '#60f0b0' : '#586898') : '#d86050';
+    const geo = o.type === 'node' ? new THREE.CylinderGeometry(0.32, 0.34, 0.05, 8) : o.type === 'relic' || o.type === 'stars' ? new THREE.OctahedronGeometry(0.22) : o.type === 'food' ? new THREE.SphereGeometry(0.18, 6, 5) : o.type === 'key' || o.type === 'claws' ? new THREE.TorusGeometry(0.18, 0.06, 6, 8) : new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6);
     const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: col }));
-    mesh.position.set(o.x, o.type === 'node' ? 0.04 : (o.type === 'relic' || o.type === 'food' || o.type === 'stars' || o.type === 'key' || o.type === 'claws') ? 0.35 + Math.sin(now * 0.004) * 0.06 : o.type === 'shrine' ? 0.43 : 0.25, o.y);
+    mesh.position.set(o.x, o.type === 'node' ? 0.04 : (o.type === 'relic' || o.type === 'food' || o.type === 'stars' || o.type === 'key' || o.type === 'claws') ? 0.35 + Math.sin(now * 0.004) * 0.06 : 0.43, o.y);
     if (o.type === 'stars' || o.type === 'key' || o.type === 'claws') mesh.rotation.y = now * 0.004;
     mesh.castShadow = o.type !== 'node';
     objGroup.add(mesh);
