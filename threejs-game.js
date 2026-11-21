@@ -413,11 +413,24 @@ function createCharacterMesh(colorHex, accentHex, isBoss = false, isPlayer = fal
   blade.position.set(0, -0.14, 0.38);
   armR.add(blade);
 
+  let clawMesh = null, starMesh = null;
+  if (isPlayer) {
+    clawMesh = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.06, 0.32), new THREE.MeshLambertMaterial({ color: '#e8a828' }));
+    clawMesh.position.set(0, -0.16, 0.18);
+    clawMesh.visible = false;
+    armR.add(clawMesh);
+
+    starMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.11), steelMat);
+    starMesh.position.set(0, -0.16, 0.14);
+    starMesh.visible = false;
+    armR.add(starMesh);
+  }
+
   g.add(torso, belt, head, legL, legR, armR);
   const pivot = new THREE.Group();
   pivot.add(g);
   if (isBoss) pivot.scale.set(1.24, 1.24, 1.24);
-  pivot.userData = { legL, legR, armR, bodyMat, rollNode: g };
+  pivot.userData = { legL, legR, armR, blade, clawMesh, starMesh, bodyMat, rollNode: g };
   return pivot;
 }
 
@@ -576,7 +589,11 @@ function animate(now) {
   sun.position.set(cx + 12, 22, cz + 6);
   sun.target.position.set(cx, 0, cz);
 
-  // Sync Player 3D Mesh (death foetal curl + flash, or somersault roll jump, or walk)
+  // Sync Player 3D Mesh (equipped weapon + death foetal curl + flash, or somersault, or walk)
+  const wpn = p.weapon || 'katana';
+  playerMesh.userData.blade.visible = wpn === 'katana';
+  if (playerMesh.userData.starMesh) playerMesh.userData.starMesh.visible = wpn === 'stars';
+  if (playerMesh.userData.clawMesh) playerMesh.userData.clawMesh.visible = wpn === 'claws';
   playerMesh.position.set(p.x, p.jumpZ || 0, p.y);
   playerMesh.rotation.y = -p.angle + Math.PI / 2;
   if (game.dead) {
