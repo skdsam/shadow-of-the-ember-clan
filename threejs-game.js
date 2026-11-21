@@ -604,15 +604,16 @@ function animate(now) {
     if (o.type === 'relic' && game.relics.includes(+o.id.slice(-1))) continue;
     if (o.type === 'food' && game.foods.includes(o.id)) continue;
     if (o.type === 'stars' && game.starCaches.includes(o.id)) continue;
+    if (o.type === 'key' && game.inventory.includes('key')) continue;
+    if (o.type === 'claws' && game.inventory.includes('claws')) continue;
     const readyShrine = o.type === 'shrine' && game.shrineCooldown <= 0;
-    const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'shrine' ? (readyShrine ? '#60f0b0' : '#586898') : o.type === 'altar' ? '#d86050' : '#d8d8d8';
-    const mesh = new THREE.Mesh(
-      o.type === 'relic' ? new THREE.OctahedronGeometry(0.22) : o.type === 'stars' ? new THREE.OctahedronGeometry(0.2) : o.type === 'food' ? new THREE.SphereGeometry(0.18, 6, 5) : o.type === 'shrine' ? new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6) : new THREE.BoxGeometry(0.45, 0.55, 0.45),
-      new THREE.MeshLambertMaterial({ color: col })
-    );
-    mesh.position.set(o.x, (o.type === 'relic' || o.type === 'food' || o.type === 'stars') ? 0.35 + Math.sin(now * 0.004) * 0.06 : o.type === 'shrine' ? 0.43 : 0.28, o.y);
-    if (o.type === 'stars') mesh.rotation.y = now * 0.004;
-    mesh.castShadow = true;
+    const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'key' ? '#e8c840' : o.type === 'claws' ? '#f0a030' : o.type === 'node' ? (game.puzzle.includes(o.number) ? '#60f0b0' : '#a8a8a8') : o.type === 'shrine' ? (readyShrine ? '#60f0b0' : '#586898') : o.type === 'altar' ? '#d86050' : '#d8d8d8';
+    // Render puzzle stones as flat recessed floor runes so no stone block sits on the road!
+    const geo = o.type === 'node' ? new THREE.CylinderGeometry(0.32, 0.34, 0.05, 8) : o.type === 'relic' || o.type === 'stars' ? new THREE.OctahedronGeometry(0.22) : o.type === 'food' ? new THREE.SphereGeometry(0.18, 6, 5) : o.type === 'key' || o.type === 'claws' ? new THREE.TorusGeometry(0.18, 0.06, 6, 8) : o.type === 'shrine' ? new THREE.CylinderGeometry(0.32, 0.42, 0.85, 6) : new THREE.BoxGeometry(0.42, 0.5, 0.42);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: col }));
+    mesh.position.set(o.x, o.type === 'node' ? 0.04 : (o.type === 'relic' || o.type === 'food' || o.type === 'stars' || o.type === 'key' || o.type === 'claws') ? 0.35 + Math.sin(now * 0.004) * 0.06 : o.type === 'shrine' ? 0.43 : 0.25, o.y);
+    if (o.type === 'stars' || o.type === 'key' || o.type === 'claws') mesh.rotation.y = now * 0.004;
+    mesh.castShadow = o.type !== 'node';
     objGroup.add(mesh);
   }
   for (const q of game.projectiles) {
@@ -636,13 +637,11 @@ function animate(now) {
   const activeEnemy = game.enemies.find(e => e.hp > 0 && dist(e, p) < 7);
   document.getElementById('enemy-bar').style.width = (activeEnemy ? (activeEnemy.hp / activeEnemy.maxHp) * 100 : 100) + '%';
   document.getElementById('wounds-bar').style.width = Math.max(0, p.hp) + '%';
-  document.getElementById('relics-txt').textContent = `RELICS: ${game.relics.length} / 3`;
-  document.getElementById('puzzle-txt').textContent = `STONES: ${game.puzzle.length} / 3`;
+  drawPixelPanels(p, game.nearestObject());
   const eatBtn = document.getElementById('eat-btn');
-  eatBtn.textContent = `🍎 FRUIT: ${p.foodBag || 0} [H]`;
+  eatBtn.textContent = `EAT APPLE [H] (${p.foodBag || 0})`;
   eatBtn.disabled = !(p.foodBag > 0);
   eatBtn.style.opacity = p.foodBag > 0 ? '1' : '0.45';
-  document.getElementById('weaponry-txt').textContent = p.stars > 0 ? `KATANA  ·  SHURIKEN × ${String(p.stars).padStart(2, '0')}` : 'SWORD ONLY (FIND ★)';
   const pips = document.querySelectorAll('#lives-row .life-pip');
   pips.forEach((pip, idx) => pip.classList.toggle('lost', idx >= game.lives));
 
@@ -705,6 +704,61 @@ function drawPowerSnakes(ratio) {
   };
   drawOne(leftSnake, leftRatio);
   drawOne(rightSnake, rightRatio);
+}
+
+// Pixel-Art C64 HUD Icon Renderers (COLLECT, HOLDING, WEAPONRY)
+const collectCtx = document.getElementById('collect-canvas').getContext('2d');
+const holdingCtx = document.getElementById('holding-canvas').getContext('2d');
+const weaponCtx = document.getElementById('weaponry-canvas').getContext('2d');
+[collectCtx, holdingCtx, weaponCtx].forEach(c => { c.imageSmoothingEnabled = false; });
+
+function drawHudIcon(ctx, kind, ox, oy) {
+  const px = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(ox + x, oy + y, w, h); };
+  if (kind === 'katana') {
+    px(2, 10, 44, 3, '#e0e0e0'); px(2, 11, 44, 1, '#ffffff'); // Steel blade
+    px(46, 6, 3, 11, '#c8c8c8'); // Crossguard
+    px(49, 9, 12, 5, '#b87830'); // Handle
+  } else if (kind === 'stars') {
+    px(8, 2, 4, 16, '#d8e8ff'); px(2, 8, 16, 4, '#d8e8ff'); px(8, 8, 4, 4, '#202020');
+  } else if (kind === 'claws') {
+    // Dragon Nails / Nunchaku-style gold claws
+    px(2, 4, 4, 14, '#d89828'); px(14, 4, 4, 14, '#d89828');
+    px(6, 4, 8, 3, '#c8c8c8'); px(6, 8, 8, 2, '#909090');
+  } else if (kind === 'key') {
+    px(2, 6, 8, 8, '#f0d050'); px(4, 8, 4, 4, '#000000');
+    px(10, 9, 12, 3, '#f0d050'); px(18, 12, 2, 4, '#f0d050'); px(14, 12, 2, 3, '#f0d050');
+  } else if (kind === 'food') {
+    px(4, 5, 10, 9, '#d82828'); px(6, 6, 3, 3, '#ff7878');
+    px(8, 2, 2, 3, '#683818'); px(10, 2, 4, 2, '#38d058');
+  } else if (kind === 'relic') {
+    px(7, 2, 6, 14, '#f0c050'); px(3, 6, 14, 6, '#f0c050'); px(7, 6, 6, 6, '#fff0a0');
+  }
+}
+
+function drawPixelPanels(p, nearObj) {
+  // 1. COLLECT (nearest pickup item)
+  collectCtx.fillStyle = '#000000'; collectCtx.fillRect(0, 0, 120, 44);
+  if (nearObj && ['food', 'stars', 'key', 'claws', 'relic'].includes(nearObj.type)) {
+    drawHudIcon(collectCtx, nearObj.type, 46, 12);
+  }
+  // 2. HOLDING (Inventory: Key, Dragon Nails, Apples, Relics)
+  holdingCtx.fillStyle = '#000000'; holdingCtx.fillRect(0, 0, 180, 64);
+  let hx = 10;
+  if (game.inventory.includes('key')) { drawHudIcon(holdingCtx, 'key', hx, 8); hx += 34; }
+  if (game.inventory.includes('claws')) { drawHudIcon(holdingCtx, 'claws', hx, 8); hx += 32; }
+  for (let i = 0; i < (p.foodBag || 0); i++) { drawHudIcon(holdingCtx, 'food', hx + i * 22, 8); }
+  for (let i = 0; i < game.relics.length; i++) { drawHudIcon(holdingCtx, 'relic', 14 + i * 28, 36); }
+  // 3. WEAPONRY (Bottom center: Sword, Shuriken count, Dragon Nails)
+  weaponCtx.fillStyle = '#000000'; weaponCtx.fillRect(0, 0, 220, 48);
+  drawHudIcon(weaponCtx, 'katana', 18, 12);
+  if (p.stars > 0) {
+    drawHudIcon(weaponCtx, 'stars', 102, 12);
+    weaponCtx.fillStyle = '#d8d8d8'; weaponCtx.font = 'bold 12px Courier New';
+    weaponCtx.fillText('x' + p.stars, 124, 24);
+  }
+  if (game.inventory.includes('claws')) {
+    drawHudIcon(weaponCtx, 'claws', 166, 12);
+  }
 }
 
 score.setMode('title', 5);

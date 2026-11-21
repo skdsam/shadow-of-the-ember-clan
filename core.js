@@ -30,9 +30,10 @@ function createMap(index){
   trees.forEach(([x,y,v])=>{props.push({x:x+.5,y:y+.5,type:'c64tree',variant:v,w:1,h:1});});
   const objects=[{id:'shrine',type:'shrine',x:2.5,y:21.2},{id:'guide',type:'guide',x:6.5,y:22.5},
   {id:'relic0',type:'relic',x:4.5,y:4.5},{id:'relic1',type:'relic',x:21.5,y:22.5},{id:'relic2',type:'relic',x:21.5,y:12.5},
-  {id:'node0',type:'node',number:0,x:4.5,y:13.5},{id:'node1',type:'node',number:1,x:12.5,y:12.5},{id:'node2',type:'node',number:2,x:21.5,y:14.5},
+  {id:'node0',type:'node',number:0,x:3.2,y:13.5},{id:'node1',type:'node',number:1,x:11.2,y:11.2},{id:'node2',type:'node',number:2,x:20.2,y:14.5},
   {id:'food0',type:'food',x:6.1,y:19.5},{id:'food1',type:'food',x:14.1,y:16.5},{id:'food2',type:'food',x:23.1,y:8.5},
   {id:'stars0',type:'stars',x:4.5,y:18.5},{id:'stars1',type:'stars',x:12.5,y:22.5},{id:'stars2',type:'stars',x:13.5,y:4.5},
+  {id:'key0',type:'key',x:6.1,y:13.5},{id:'claws0',type:'claws',x:14.1,y:22.5},
   {id:'altar',type:'altar',x:21.5,y:4.5}];
   const spawns=[
    {x:4.5,y:12.5,kind:'sword'},{x:6.5,y:4.5,kind:'archer'},
@@ -96,30 +97,34 @@ class Game{
  constructor(options={}){this.difficulty=options.difficulty||'normal';this.events=[];this.time=0;this.totalKills=0;this.deaths=0;this.lives=3;this.completed=false;this.loadLevel(0);}
  emit(type,data={}){this.events.push({type,...data});}
  loadLevel(index){
-  this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.starCaches=[];this.puzzle=[];this.shrineCooldown=0;if(index===0||index===5)this.lives=3;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
+  this.level=index;this.map=createMap(index);this.data=LEVELS[index];this.relics=[];this.foods=[];this.starCaches=[];this.inventory=[];this.puzzle=[];this.shrineCooldown=0;if(index===0||index===5)this.lives=3;this.solved=false;this.bossStarted=false;this.bossDefeated=false;this.projectiles=[];this.effects=[];this.dead=false;this.transitionReady=false;
   this.player={x:index===5?4.5:2.5,y:22.5,jumpZ:0,hp:100,maxHp:100,stamina:100,stars:index===5?0:8,foodBag:0,angle:-Math.PI/2,state:'idle',timer:0,cooldown:0,throwCD:0,invuln:0,combo:0,step:0,kills:0};
   this.enemies=this.map.spawns.map((s,i)=>this.enemy(s,i));this.checkpoint=this.snapshot();this.emit('level',{index});
  }
  enemy(s,i){const boss=s.kind==='boss',hp=(boss?145+this.level*22:s.kind==='armour'?70:s.kind==='spear'?48:38)*(this.difficulty==='story'?.7:this.difficulty==='hard'?1.25:1);
   return{...s,id:i,homeX:s.x,homeY:s.y,hp,maxHp:hp,angle:1,state:'idle',timer:0,cooldown:1+i*.3,path:[],pathTimer:0,step:0,hitFlash:0,alert:false,patrol:0,hitDone:false};}
- snapshot(){return{version:1,level:this.level,difficulty:this.difficulty,time:this.time,totalKills:this.totalKills,deaths:this.deaths,player:{...this.player,state:'idle',timer:0,invuln:0},relics:[...this.relics],puzzle:[...this.puzzle],solved:this.solved,bossStarted:this.bossStarted,bossDefeated:this.bossDefeated,enemies:this.enemies.map(e=>({...e,path:[],state:e.hp<=0?'dead':'idle',timer:0,cooldown:1}))};}
+ snapshot(){return{version:1,level:this.level,difficulty:this.difficulty,time:this.time,totalKills:this.totalKills,deaths:this.deaths,player:{...this.player,state:'idle',timer:0,invuln:0},relics:[...this.relics],inventory:[...(this.inventory||[])],foods:[...(this.foods||[])],starCaches:[...(this.starCaches||[])],puzzle:[...this.puzzle],solved:this.solved,bossStarted:this.bossStarted,bossDefeated:this.bossDefeated,enemies:this.enemies.map(e=>({...e,path:[],state:e.hp<=0?'dead':'idle',timer:0,cooldown:1}))};}
  restore(s){
   if(!Game.validSave(s))return false;
   this.difficulty=s.difficulty;this.loadLevel(s.level);this.time=s.time||0;this.totalKills=s.totalKills||0;this.deaths=s.deaths||0;
-  this.player={...this.player,...s.player,state:'idle',timer:0,invuln:1};this.relics=[...s.relics];this.puzzle=[...s.puzzle];this.solved=!!s.solved;this.bossStarted=!!s.bossStarted;this.bossDefeated=!!s.bossDefeated;
+  this.player={...this.player,...s.player,state:'idle',timer:0,invuln:1};this.relics=[...s.relics];this.inventory=[...(s.inventory||[])];this.foods=[...(s.foods||[])];this.starCaches=[...(s.starCaches||[])];this.puzzle=[...s.puzzle];this.solved=!!s.solved;this.bossStarted=!!s.bossStarted;this.bossDefeated=!!s.bossDefeated;
   this.enemies=s.enemies.map(e=>({...e,path:[],pathTimer:0,state:e.hp<=0?'dead':'idle',timer:0,cooldown:1}));this.checkpoint=JSON.parse(JSON.stringify(s));return true;
  }
- static validSave(s){return !!(s&&s.version===1&&Number.isInteger(s.level)&&s.level>=0&&s.level<5&&['story','normal','hard'].includes(s.difficulty)&&s.player&&Number.isFinite(s.player.x)&&Number.isFinite(s.player.y)&&s.player.x>0&&s.player.x<25&&s.player.y>0&&s.player.y<25&&Number.isFinite(s.player.hp)&&Array.isArray(s.enemies)&&s.enemies.length<=10&&s.enemies.every(e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.hp))&&Array.isArray(s.relics)&&s.relics.every(x=>Number.isInteger(x)&&x>=0&&x<=2)&&Array.isArray(s.puzzle)&&s.puzzle.length<=3&&s.puzzle.every(x=>Number.isInteger(x)&&x>=0&&x<=2));}
+ static validSave(s){return !!(s&&s.version===1&&Number.isInteger(s.level)&&s.level>=0&&s.level<=5&&['story','normal','hard'].includes(s.difficulty)&&s.player&&Number.isFinite(s.player.x)&&Number.isFinite(s.player.y)&&s.player.x>0&&s.player.x<25&&s.player.y>0&&s.player.y<25&&Number.isFinite(s.player.hp)&&Array.isArray(s.enemies)&&s.enemies.length<=10&&s.enemies.every(e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.hp))&&Array.isArray(s.relics)&&s.relics.every(x=>Number.isInteger(x)&&x>=0&&x<=2)&&Array.isArray(s.puzzle)&&s.puzzle.length<=3&&s.puzzle.every(x=>Number.isInteger(x)&&x>=0&&x<=2));}
  move(e,dx,dy){
   const shrine=e!==this.player&&this.map.objects.find(o=>o.type==='shrine');
-  if(walkable(this.map,e.x+dx,e.y)&&(!shrine||Math.hypot(e.x+dx-shrine.x,e.y-shrine.y)>=3.5))e.x+=dx;
+  const lockedBridge=e===this.player&&this.map.pathOnly&&!this.inventory?.includes('key');
+  if(walkable(this.map,e.x+dx,e.y)&&(!shrine||Math.hypot(e.x+dx-shrine.x,e.y-shrine.y)>=3.5)&&(!lockedBridge||e.x+dx<17.6))e.x+=dx;
+  else if(lockedBridge&&e.x+dx>=17.6&&!this._keyWarned){this._keyWarned=true;this.emit('message',{text:'Bridge locked · Find the Iron Key to cross East'});}
   if(walkable(this.map,e.x,e.y+dy)&&(!shrine||Math.hypot(e.x-shrine.x,e.y+dy-shrine.y)>=3.5))e.y+=dy;
  }
- nearestObject(){return this.map.objects.filter(o=>!(o.type==='relic'&&this.relics.includes(+o.id.slice(-1)))&&!(o.type==='food'&&this.foods.includes(o.id))&&!(o.type==='stars'&&this.starCaches.includes(o.id))).map(o=>({o,d:dist(o,this.player)})).filter(v=>v.d<(v.o.type==='food'||v.o.type==='shrine'?1.85:1.55)).sort((a,b)=>a.d-b.d)[0]?.o;}
+ nearestObject(){return this.map.objects.filter(o=>!(o.type==='relic'&&this.relics.includes(+o.id.slice(-1)))&&!(o.type==='food'&&this.foods.includes(o.id))&&!(o.type==='stars'&&this.starCaches.includes(o.id))&&!(o.type==='key'&&this.inventory.includes('key'))&&!(o.type==='claws'&&this.inventory.includes('claws'))).map(o=>({o,d:dist(o,this.player)})).filter(v=>v.d<(v.o.type==='food'||v.o.type==='shrine'||v.o.type==='key'||v.o.type==='claws'||v.o.type==='node'?1.9:1.55)).sort((a,b)=>a.d-b.d)[0]?.o;}
  interact(){
-  if(this.dead)return;const o=this.nearestObject();if(!o){this.emit('message',{text:'Find a shrine, relic, or numbered stone. Press Tab for your map.'});return;}
-  if(o.type==='food'){if(!this.foods.includes(o.id)){this.foods.push(o.id);this.player.foodBag=(this.player.foodBag||0)+1;this.emit('effect',{name:'relic'});this.emit('message',{text:`Stored fruit in bag (${this.player.foodBag}) · Press [H] to eat`});}return;}
+  if(this.dead)return;const o=this.nearestObject();if(!o){this.emit('message',{text:'Explore the path for relics, Iron Key, Dragon Nails, or apples.'});return;}
+  if(o.type==='food'){if(!this.foods.includes(o.id)){this.foods.push(o.id);this.player.foodBag=(this.player.foodBag||0)+1;this.emit('effect',{name:'relic'});this.emit('message',{text:`Stored apple in HOLDING (${this.player.foodBag}) · Press [H] to eat`});}return;}
   if(o.type==='stars'){if(!this.starCaches.includes(o.id)){this.starCaches.push(o.id);this.player.stars=Math.min(15,this.player.stars+5);this.emit('effect',{name:'relic'});this.emit('message',{text:`Found Ninja Stars (+5) · ${this.player.stars} total [K]`});}return;}
+  if(o.type==='key'){if(!this.inventory.includes('key')){this.inventory.push('key');this.emit('effect',{name:'relic'});this.emit('message',{text:'Found Iron Key! You can now cross the eastern river bridges.'});}return;}
+  if(o.type==='claws'){if(!this.inventory.includes('claws')){this.inventory.push('claws');this.emit('effect',{name:'relic'});this.emit('message',{text:'Found Dragon Nails! Added to WEAPONRY & HOLDING.'});}return;}
   if(o.type==='guide'){this.emit('dialogue',{title:'Sora · shrine keeper',text:this.data.clue+' Recover the three ember relics, then challenge the guardian at the northern altar. Rest at the lantern shrine to save your journey.'});return;}
   if(o.type==='shrine'){
    if(this.shrineCooldown>0){const m=Math.floor(this.shrineCooldown/60),s=Math.ceil(this.shrineCooldown%60);this.emit('effect',{name:'error'});this.emit('message',{text:`The shrine rests · Pray again in ${m}:${String(s%60).padStart(2,'0')} (or next level)`});return;}
@@ -133,6 +138,7 @@ class Game{
   }
   if(o.type==='altar'){
    if(this.bossDefeated){this.transitionReady=true;this.emit('travel',{text:this.data.story});return;}
+   if(this.level===5&&!this.inventory.includes('claws')){this.emit('message',{text:'Need Dragon Nails to break the northern altar seal!'});return;}
    if(this.relics.length<3||!this.solved){this.emit('message',{text:`Altar sealed. Relics ${this.relics.length}/3 · mechanism ${this.solved?'awake':'asleep'}. ${this.data.clue}`});return;}
    if(!this.bossStarted){this.bossStarted=true;this.enemies.push(this.enemy({x:22.5,y:4.5,kind:'boss'},99));this.emit('boss',{name:this.data.boss});this.emit('message',{text:this.data.boss+' awakens. Keep moving. Watch the windup.'});}
   }

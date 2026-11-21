@@ -77,12 +77,11 @@
      <div class="bar-wrap" style="border-color:#9a9a9a;height:12px"><div id="wounds-bar" class="bar-wounds"></div></div>
     </div>
     <div class="hud-box">
-     <div class="hud-title">· USING ·</div>
-     <div style="color:#88e0a0;font-size:13px;margin:8px 0 22px">⚔ KATANA</div>
+     <div class="hud-title">· COLLECT ·</div>
+     <canvas id="collect-canvas" width="120" height="44" style="display:block;margin:4px auto 12px;image-rendering:pixelated"></canvas>
      <div class="hud-title">· HOLDING ·</div>
-     <div id="relics-txt" style="color:#f0d080;font-size:13px;margin-top:8px">RELICS: 0 / 3</div>
-     <div id="puzzle-txt" style="color:#9a9a9a;font-size:11px;margin-top:6px">STONES: 0 / 3</div>
-     <button id="eat-btn" disabled style="margin-top:12px;width:100%;padding:6px 4px;background:#1a2420;color:#e86060;border:1px solid #607068;font:inherit;font-size:11px;cursor:pointer">🍎 FRUIT: 0 [H]</button>
+     <canvas id="holding-canvas" width="180" height="64" style="display:block;margin:6px auto;image-rendering:pixelated"></canvas>
+     <button id="eat-btn" disabled style="margin-top:8px;width:100%;padding:5px 4px;background:#1a2420;color:#e86060;border:1px solid #607068;font:inherit;font-size:10px;cursor:pointer">EAT APPLE [H] (0)</button>
     </div>
    </div>
    <div class="hud-bottom">
@@ -95,8 +94,8 @@
      <div class="hud-title" style="margin:0">· LIVES ·</div>
     </div>
     <div style="text-align:center">
-     <div id="hit-badge" style="height:18px;font-size:12px;color:#f0d060;letter-spacing:2px;margin-bottom:2px"></div>
-     <div id="weaponry-txt" style="font-size:15px;color:#d8d8d8;margin-bottom:6px">SHURIKEN × 08</div>
+     <canvas id="weaponry-canvas" width="220" height="48" style="display:block;margin:0 auto 4px;image-rendering:pixelated"></canvas>
+     <div id="hit-badge" style="height:14px;font-size:10px;color:#f0d060;letter-spacing:2px"></div>
      <div class="hud-title" style="margin:0">· WEAPONRY ·</div>
     </div>
     <div class="logo-c64">
