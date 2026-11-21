@@ -198,6 +198,20 @@ const soilTex = makePixelTex(16, (c, s) => {
   }
 });
 
+const torchTex = makeSpriteTex(20, 36, (c) => {
+  const px = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  px(7, 16, 6, 18, '#505860'); px(8, 16, 2, 18, '#788088');
+  px(5, 13, 10, 4, '#303438');
+  px(6, 5, 8, 8, '#ff7820'); px(8, 7, 4, 5, '#ffe860');
+});
+
+const palaceScreenTex = makeSpriteTex(48, 44, (c) => {
+  const px = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  px(2, 6, 44, 36, '#881820'); px(0, 2, 48, 5, '#d8a830');
+  px(6, 10, 14, 28, '#f0d8a8'); px(28, 10, 14, 28, '#f0d8a8');
+  for (let y = 14; y < 36; y += 6) { px(6, y, 14, 1, '#583018'); px(28, y, 14, 1, '#583018'); }
+});
+
 const waterTex = makePixelTex(16, (c, s) => {
   c.fillStyle = '#3c5cb8'; c.fillRect(0, 0, s, s);
   c.fillStyle = '#6890f0';
@@ -246,8 +260,20 @@ function getSpriteMat(tex) {
   return spriteMatCache.get(tex);
 }
 
+function getBiome(rx, ry) {
+  if (rx >= 7 && ry < 4) return { name: 'INNER SANCTUM', grass: '#501820', path: '#d8c4a0', style: 'sanctum' };
+  if (rx >= 7 && ry >= 4) return { name: 'THE DUNGEONS', grass: '#262c36', path: '#889098', style: 'dungeon' };
+  if (rx >= 4 && rx <= 6) return { name: 'PALACE GARDENS', grass: '#22c884', path: '#e8e4dc', style: 'garden' };
+  if (rx <= 3 && ry < 4) return { name: 'NORTH WASTELANDS', grass: '#288c64', path: '#b8bcc0', style: 'wasteland' };
+  return { name: 'THE WILDERNESS', grass: '#18dc6c', path: '#e0e0e0', style: 'wilderness' };
+}
+
 function buildRoom(rx, ry) {
   while (roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
+  const biome = getBiome(rx, ry);
+  ground.material.color.set(biome.grass);
+  scene.background.set(biome.grass);
+  sharedPathMat.color.set(biome.path);
   const M = game.map.size || 26, maxRoom = Math.floor(M / 9) - 1;
   const minX = rx * 9, maxX = Math.min(M, minX + 9);
   const minY = ry * 9, maxY = Math.min(M, minY + 9);
@@ -300,21 +326,22 @@ function buildRoom(rx, ry) {
       }
 
       if (z === minY - 1 && x % 4 === 1) {
-        addBillboard(pagodaWallTex, x + 0.5, z + 0.5, 2.5, 2.0);
+        addBillboard(biome.style === 'sanctum' ? palaceScreenTex : pagodaWallTex, x + 0.5, z + 0.5, 2.5, 2.0);
         if (hash % 2 === 0) addBillboard(statueTex, x + 1.2, z + 1.1, 1.1, 1.5);
-      } else if (nearPath && hash < 12) {
-        addBillboard(lanternTex, x + 0.5, z + 0.5, 0.75, 1.15);
+      } else if (nearPath && hash < 14) {
+        addBillboard((biome.style === 'dungeon' || biome.style === 'sanctum') ? torchTex : lanternTex, x + 0.5, z + 0.5, 0.75, 1.2);
       } else if (nearPath && hash < 52) {
-        addBillboard(bushTex, x + 0.5, z + 0.5, 1.05, 0.78);
+        addBillboard(biome.style === 'dungeon' ? craggyBoulderTex : bushTex, x + 0.5, z + 0.5, 1.05, 0.78);
       } else if (!nearPath && hash < 16) {
-        addBillboard(hash % 3 === 0 ? treeSakuraTex : treeGreenTex, x + 0.5, z + 0.5, 1.95, 2.25);
+        const treeTex = biome.style === 'garden' ? treeSakuraTex : biome.style === 'sanctum' ? palaceScreenTex : biome.style === 'dungeon' ? statueTex : (hash % 3 === 0 ? treeSakuraTex : treeGreenTex);
+        addBillboard(treeTex, x + 0.5, z + 0.5, 1.95, 2.25);
       } else if (!nearPath && hash >= 16 && hash < 26) {
-        addBillboard(bambooTex, x + 0.5, z + 0.5, 1.2, 1.85);
+        addBillboard(biome.style === 'dungeon' ? torchTex : bambooTex, x + 0.5, z + 0.5, 1.1, 1.75);
       } else if (!nearPath && hash >= 26 && hash < 40) {
         addBillboard(craggyBoulderTex, x + 0.5, z + 0.5, 1.65, 1.25);
-        if (hash % 2 === 0) addBillboard(craggyBoulderTex, x + 0.9, z + 0.8, 0.95, 0.72); // Boulder cluster
+        if (hash % 2 === 0) addBillboard(craggyBoulderTex, x + 0.9, z + 0.8, 0.95, 0.72);
       } else if (!nearPath && hash >= 40 && hash < 65) {
-        addBillboard(bushTex, x + 0.5, z + 0.5, 0.95, 0.72);
+        addBillboard(biome.style === 'sanctum' ? lanternTex : bushTex, x + 0.5, z + 0.5, 0.95, 0.72);
       }
     }
   }
