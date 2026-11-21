@@ -678,6 +678,12 @@ function animate(now) {
     if (!mesh) {
       if (o.type === 'guide') {
         mesh = createCharacterMesh('#2e6b5e', '#d8c088', false, false);
+      } else if (o.type === 'shrine') {
+        mesh = createCharacterMesh('#c87828', '#f0d890', false, false);
+        mesh.userData.armL.rotation.x = -0.85;
+        mesh.userData.armR.rotation.x = -0.85;
+        mesh.userData.armL.rotation.z = -0.3;
+        mesh.userData.armR.rotation.z = 0.3;
       } else {
         const col = o.type === 'relic' ? '#f0c050' : o.type === 'food' ? '#e83838' : o.type === 'stars' ? '#d8e8ff' : o.type === 'key' ? '#e8c840' : o.type === 'claws' ? '#f0a030' : o.type === 'node' ? '#a8a8a8' : o.type === 'shrine' ? '#60f0b0' : '#d86050';
         const geo = o.type === 'node' ? sharedObjGeos.node : (o.type === 'relic' || o.type === 'stars') ? sharedObjGeos.oct : o.type === 'food' ? sharedObjGeos.food : (o.type === 'key' || o.type === 'claws') ? sharedObjGeos.torus : sharedObjGeos.cyl;
@@ -696,8 +702,8 @@ function animate(now) {
     mesh.visible = inRoom && !collected;
     if (!mesh.visible) continue;
     if (o.type === 'node') mesh.material.color.set(game.puzzle.includes(o.number) ? '#60f0b0' : '#a8a8a8');
-    else if (o.type === 'shrine') mesh.material.color.set(game.shrineCooldown <= 0 ? '#60f0b0' : '#586898');
-    mesh.position.set(o.x, o.type === 'guide' ? 0 : o.type === 'node' ? 0.04 : (o.type === 'relic' || o.type === 'food' || o.type === 'stars' || o.type === 'key' || o.type === 'claws') ? 0.35 + Math.sin(now * 0.004) * 0.06 : 0.43, o.y);
+    else if (o.type === 'shrine') mesh.scale.setScalar(game.shrineCooldown <= 0 ? 1 + Math.sin(now * 0.004) * 0.025 : 0.96);
+    mesh.position.set(o.x, (o.type === 'guide' || o.type === 'shrine') ? 0 : o.type === 'node' ? 0.04 : (o.type === 'relic' || o.type === 'food' || o.type === 'stars' || o.type === 'key' || o.type === 'claws') ? 0.35 + Math.sin(now * 0.004) * 0.06 : 0.43, o.y);
     if (o.type === 'stars' || o.type === 'key' || o.type === 'claws') mesh.rotation.y = now * 0.004;
   }
 
