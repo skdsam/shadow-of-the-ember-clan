@@ -10,6 +10,20 @@ Created by **SkdSam** — a modern 3D isometric rebuild of **The Last Ninja** wi
 
 ![Wastelands Isometric Gameplay](docs/gameplay-shrine-monk.png)
 
+## Soundtrack & Sound Effects (MP3)
+
+All synthesized C64-inspired chiptune music tracks and game sound effects recreated by **SkdSam** are exported as MP3 audio files in the [`audio/`](audio/) folder:
+
+| Track | Description | Audio File |
+| :--- | :--- | :--- |
+| **01 · Intro Theme** | 112 BPM Retro Ninja Groove (`F#m → D → E → C#m`) | [🎵 Listen / Download `01-intro-theme.mp3`](audio/01-intro-theme.mp3) |
+| **02 · Wastelands Heroic** | 124 BPM General Exploration Theme (`E Minor`) | [🎵 Listen / Download `02-wastelands-explore.mp3`](audio/02-wastelands-explore.mp3) |
+| **03 · Night Raid** | 150 BPM Combat & Boss Encounter Theme (`A Minor`) | [🎵 Listen / Download `03-night-raid-battle.mp3`](audio/03-night-raid-battle.mp3) |
+| **04 · Sacred Sanctuary** | 108 BPM Monk Shrine Safe Point & Rewards (`F Major 9`) | [🎵 Listen / Download `04-sacred-sanctuary.mp3`](audio/04-sacred-sanctuary.mp3) |
+| **05 · Urgent Tension** | 136 BPM Low-Health Danger Pulse (`C Harmonic Minor`) | [🎵 Listen / Download `05-urgent-tension.mp3`](audio/05-urgent-tension.mp3) |
+| **06 · Dawn Epilogue** | 76 BPM Ending & Credits Ballad (`Ab Lydian`) | [🎵 Listen / Download `06-dawn-epilogue.mp3`](audio/06-dawn-epilogue.mp3) |
+| **07 · Sound Effects Suite** | Katana Slash, Shuriken, Somersault, Parry, Relic, Shrine Prayer & Death Lament | [🔊 Listen / Download `07-sfx-suite.mp3`](audio/07-sfx-suite.mp3) |
+
 ## Play
 
 WASD/arrows move in screen directions; **J** sword, **K** shuriken, **Space** dodge, **Shift** guard, **E** interact, **Tab** map, **Esc/P** pause, **M** music. Hold J for follow-up attacks. Nearby foes are automatically targeted when attacking. Watch enemy windup markers and use guard or dodge. A controller or on-screen touch controls can also be used; see the in-game guide.
